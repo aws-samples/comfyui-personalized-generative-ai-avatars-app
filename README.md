@@ -100,8 +100,8 @@ Ensure all these prerequisites are met before proceeding with the deployment.
 
 1. Clone this repository:
    ```
-   git clone [your-repo-url]
-   cd [your-repo-name]
+   git clone https://github.com/aws-samples/comfyui-personalized-generative-ai-avatars-app.git
+   cd comfyui-personalized-generative-ai-avatars-app
    ```
 
 2. Install dependencies:
