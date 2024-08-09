@@ -279,7 +279,7 @@ However, always review and adjust security settings for your specific use case.
 - [Luca Perrozzi](https://www.linkedin.com/in/luca-perrozzi/)
 
 ## Contributors
-Contributions to this project are welcome! Please refer to the [Contributing](CONTRIBUTING) file for guidelines.
+Contributions to this project are welcome! Please refer to the [Contributing](CONTRIBUTING.md) file for guidelines.
 
 Current contributors:  
 [![contributors](https://contrib.rocks/image?repo=aws-samples/comfyui-personalized-generative-ai-avatars-app&max=1500)](https://github.com/aws-samples/comfyui-personalized-generative-ai-avatars-app/graphs/contributors)
