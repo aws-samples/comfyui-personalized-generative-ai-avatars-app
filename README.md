@@ -282,7 +282,7 @@ However, always review and adjust security settings for your specific use case.
 Contributions to this project are welcome! Please refer to the [Contributing](CONTRIBUTING.md) file for guidelines.
 
 Current contributors:  
-[![contributors](https://contrib.rocks/image?repo=aws-samples/comfyui-personalized-generative-ai-avatars-app&max=1500)](https://github.com/aws-samples/comfyui-personalized-generative-ai-avatars-app/graphs/contributors)
+[![contributors](https://contrib.rocks/image?repo=aws-samples/comfyui-personalized-generative-ai-avatars-app)](https://github.com/aws-samples/comfyui-personalized-generative-ai-avatars-app/graphs/contributors)
 
 
 ## License
