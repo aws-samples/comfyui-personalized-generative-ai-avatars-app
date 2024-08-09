@@ -1,0 +1,50 @@
+[
+  {
+    "Club": "NBA: LA Lakers",
+    "prompt": "Los Angeles Lakers NBA Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Lakers team jersey,\nStaples Center Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NBA: Chicago Bulls",
+    "prompt": "Chicago Bulls NBA Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Bulls team jersey,\nUnited Center Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NBA: Boston Celtics",
+    "prompt": "Boston Celtics NBA Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Celtics team jersey,\nTD Garden Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NHL: Montreal Canadiens",
+    "prompt": "Montreal Canadiens NHL Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Canadiens team jersey,\nBell Centre Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NHL: Toronto Maple Leafs",
+    "prompt": "Toronto Maple Leafs NHL Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Maple Leafs team jersey,\nScotiabank Arena Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NHL: Detroit Red Wings",
+    "prompt": "Detroit Red Wings NHL Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Red Wings team jersey,\nLittle Caesars Arena Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "F1: Mercedes-AMG",
+    "prompt": "Mercedes-AMG Petronas Formula 1 Driver,\nFrontal medium-shot face portrait,\nMale,\nWearing official Mercedes F1 racing suit,\nRace Track Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "F1: Scuderia Ferrari",
+    "prompt": "Scuderia Ferrari Formula 1 Driver,\nFrontal medium-shot face portrait,\nMale,\nWearing official Ferrari F1 racing suit,\nRace Track Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "F1: Red Bull Racing",
+    "prompt": "Red Bull Racing Formula 1 Driver,\nFrontal medium-shot face portrait,\nMale,\nWearing official Red Bull F1 racing suit,\nRace Track Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NFL: Dallas Cowboys",
+    "prompt": "Dallas Cowboys NFL Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Cowboys team jersey,\nAT&T Stadium Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NFL: Green Bay Packers",
+    "prompt": "Green Bay Packers NFL Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Packers team jersey,\nLambeau Field Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  },
+  {
+    "Club": "NFL: New England Patriots",
+    "prompt": "New England Patriots NFL Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Patriots team jersey,\nGillette Stadium Background,\nFeatures: \nUltra-realistic, 8k resolution"
+  }
+]

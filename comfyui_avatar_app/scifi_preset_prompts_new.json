@@ -1,0 +1,70 @@
+[
+    {
+      "Element_Preset": "Aetheric",
+      "prompt": "Aetheric Elemental gender Hero\nElement: Aetheric Essence\nTitle: Aetheric elemental gender warrior, conduit of celestial might\nLens: 80mm\nStyle: Photorealistic\nFeatures: Body shimmering with ethereal quintessential aether, an aura of cosmic power surrounds him.\nAttire: Astral cyber-armor designed to channel and focus aetheric quintessential forces.\nPose: frontal medium-shot portrait.\nBackground: Standing defiantly against a backdrop of cosmic threats, aetheric essence serves as a bulwark protecting all of existence."
+    },
+    {
+      "Element_Preset": "Aurora",
+      "prompt": "Aurora Elemental gender Hero\nElement: Aurora\nTitle: Futuristic dystopian aurora elemental gender warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Skin shimmering with the ethereal glow of the aurora borealis, eyes that flicker with curtain-like auroral displays.\nAttire: Luminescent armor that channels geomagnetic solar winds.\nPose: frontal medium-shot portrait.\nBackground: The polar night sky, alive with a dance of lights, figure framed against the majesty of natural light shows."
+    },
+    {
+      "Element_Preset": "Bioplasma",
+      "prompt": "Bioplasma Elemental gender Hero \nElement: Bioplasma\nTitle: Bioplasma elemental gender life-cultivator\nLens: 80mm\nStyle: Photorealistic\nFeatures: Body formed of iridescent bioplasmic energy, skin glowing with vibrant, pulsating light.\nAttire: Bio-augmented suit that channels and focuses energies into restorative plasma waves.\nPose: frontal medium-shot portrait.\nBackground: A once barren landscape, now blossoming with verdant life, as flora and fauna thrive under bioplasmic stewardship."
+    },
+    {
+      "Element_Preset": "Celestial",
+      "prompt": "Celestial Elemental gender Hero\nElement: Celestial Energies\nTitle: Celestial elemental gender starforger\nLens: 80mm \nStyle: Photorealistic\nFeatures: Body shimmering with cosmic energies, hair and skin displaying swirling nebular patterns.\nAttire: Stellar forge-suit that channels the very energies that birth stars and galaxies.\nPose: frontal medium-shot portrait.\nBackground: The vast, colorful expanse of a stellar nursery, where new stars are taking form, cradled by celestial mastery."
+    },
+    {
+      "Element_Preset": "Galaxy",
+      "prompt": "Galaxy Elemental gender Hero\nElement: Galaxy\nTitle: Futuristic dystopian galaxy elemental  warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Skin adorned with moving images of galaxies, eyes like deep space.\nAttire: Armor with a cosmic motif, harnessing the energy of stars and nebulae.\nPose: frontal medium-shot portrait.\nBackground: The vastness of space, with swirling galaxies and star systems, emphasizing cosmic connection."
+    },
+    {
+      "Element_Preset": "Geomantic",
+      "prompt": "Geomantic Elemental gender Hero\nElement: Geomantic Energies\nTitle: Geomantic elemental gender warrior, protector of the living lands\nLens: 80mm\nStyle: Photorealistic\nFeatures: Body comprised of elemental earth and stones, aura shimmering with geomantic energies.\nAttire: Intricately engraved stone platemail that channels the regenerative forces of the planet.\nPose: frontal medium-shot portrait.\nBackground: Ancient forests and hallowed grounds thrive under steadfast guardianship, the geomantic energies sustaining all life."
+    },
+    {
+      "Element_Preset": "Gravity",
+      "prompt": "Gravity Elemental gender Hero\nElement: Gravity\nTitle: Futuristic dystopian gravity elemental gender warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Body distorting the space around, creating gravitational lensing and warping effects, hair and clothing defying the pull of gravity.\nAttire: Suit embedded with powerful graviton generators, allowing to manipulate the fabric of space-time itself.\nPose: frontal medium-shot portrait.\nBackground: A twisted cityscape where buildings and structures bend and contort under the immense gravitational forces he commands, creating a surreal and unsettling landscape."
+    },
+    {
+      "Element_Preset": "Light",
+      "prompt": "Light Elemental gender Hero\nElement: Light\nTitle: Futuristic dystopian light elemental gender warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Bioluminescent tattoos depicting constellations, eyes that illuminate darkness.\nAttire: Reflective armor that manipulates light, creating illusions or blinding flashes.\nPose: frontal medium-shot portrait.\nBackground: A cityscape at dawn, bathed in golden light, symbolizing hope."
+    },
+    {
+      "Element_Preset": "Nature",
+      "prompt": "Nature Elemental gender Hero\nElement: Nature\nTitle: Futuristic dystopian nature elemental  warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Skin blooming with living plants, eyes reflecting the verdant earth.\nAttire: Bio-synthetic armor with leaf and vine motifs.\nPose: frontal medium-shot portrait.\nBackground: A lush, wild forest encroaching upon ruins of civilization."
+    },
+    {
+      "Element_Preset": "Phase",
+      "prompt": "Phase Elemental gender Hero\nElement: Phase\nTitle: Futuristic dystopian phase elemental gender warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Body and attire that shimmer between solid, liquid, and gas states, hair appearing as a mist.\nAttire: Morphing armor that adapts its phase state for defense or attack.\nPose: frontal medium-shot portrait.\nBackground: A mysterious, fog-covered landscape that transitions into crystal-clear clarity, embodying ability to alter physical state."
+    },
+    {
+      "Element_Preset": "Quantum",
+      "prompt": "Quantum Elemental gender Hero\nElement: Quantum\nTitle: Futuristic dystopian quantum elemental gender warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Body phasing in and out of existence, particles shifting and rearranging in a constant flux of probability.\nAttire: Quantum-entangled armor that bends the rules of space and time, allowing for teleportation and reality manipulation.\nPose: frontal medium-shot portrait.\nBackground: A kaleidoscope of fractured realities, where the fabric of the universe bends"
+    },
+    {
+      "Element_Preset": "Serenity",
+      "prompt": "Serenity Elemental gender Hero\nElement: Serenity\nTitle: Serene elemental gender warrior, bringer of tranquility  \nLens: 80mm\nStyle: Photorealistic\nFeatures: An aura of profound calm emanating from being, features exhibiting an unshakable inner peace.\nAttire: Flowing robes that seem to ripple with the gentle currents of a still pond, imbued with harmonizing frequencies.\nPose: frontal medium-shot portrait.\nBackground: A bustling city square, once filled with chaos and discord, now an oasis of stillness, presence instills a sense of profound tranquility in all around."
+    },
+    {
+      "Element_Preset": "Sound",
+      "prompt": "Sound Elemental gender Hero\nElement: Sound\nTitle: Futuristic dystopian sound elemental  warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Sonic wave patterns etched into skin, hair vibrating with sound energy.\nAttire: Suit with integrated speakers and sound wave amplifiers.\nPose: frontal medium-shot portrait.\nBackground: A shattered landscape, representing the destructive power of voice."
+    },
+    {
+      "Element_Preset": "Spiritual",
+      "prompt": "Spiritual Elemental gender Hero\nElement: Spiritual\nTitle: Futuristic dystopian spiritual elemental  warrior, utopian superhero\nLens: 80mm\nStyle: Photorealistic\nFeatures: Ethereal aura, eyes that see beyond the physical realm.\nAttire: Robes with ancient symbols, integrated with spiritual energy conductors.\nPose: frontal medium-shot portrait.\nBackground: A tranquil, otherworldly plane, bridging the material and spiritual worlds."
+    },
+    {
+      "Element_Preset": "Time",
+      "prompt": "Time Elemental gender Hero\nElement: Time\nTitle: Futuristic dystopian time elemental gender warrior, utopian superhero\nPose: frontal medium-shot portrait.\nLens: 80mm\nStyle: Photorealistic\nFeatures: Chrono-synchronic gears visible beneath skin, eyes with swirling temporal loops.\nAttire: Clockwork-inspired armor with a timepiece chest emblem.\nBackground: A blurred landscape, representing fast-forwarded time around."
+    },
+    {
+      "Element_Preset": "Vitality",
+      "prompt": "Vitality Elemental gender Hero\nElement: Vitality  \nTitle: Vitalizing elemental gender warrior, cultivator of life\nLens: 80mm\nStyle: Photorealistic\nFeatures: Skin and hair teeming with vibrant, verdant energy, eyes sparkling with the essence of growth and renewal.\nAttire: Bio-augmented armor that channels and amplifies the forces of nature, covered in intricate, vine-like patterns.\nPose: frontal medium-shot portrait. \nBackground: A once barren, lifeless landscape, now flourishing with lush vegetation and vibrant flora, brought to bloom by revitalizing touch."
+    },
+    {
+      "Element_Preset": "Zephyric",
+      "prompt": "Zephyr Elemental gender Hero \nElement: Zephyric Winds\nTitle: Zephyr elemental gender warrior, spirit of renewal and change\nLens: 80mm\nStyle: Photorealistic \nFeatures: Body formed of swirling, rejuvenating zephyr winds, hair and eyes displaying ever-shifting breezes.\nAttire: Aerodynamic bodysuit that reacts and billows with the zephyr currents he commands.  \nPose: frontal medium-shot portrait.\nBackground: Once stagnant and choked lands now breathe anew, the zephyric winds under mastery heralding a season of revitalization."
+    }
+  ]

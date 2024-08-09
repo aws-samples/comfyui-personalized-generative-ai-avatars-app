@@ -1,0 +1,200 @@
+{
+  "43": {
+    "inputs": {
+      "ckpt_name": "dreamshaper-XL.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "44": {
+    "inputs": {
+      "width": 768,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "45": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 363979485303561,
+      "steps": 6,
+      "cfg": 2,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "55",
+        0
+      ],
+      "positive": [
+        "46",
+        0
+      ],
+      "negative": [
+        "47",
+        0
+      ],
+      "latent_image": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "KSampler (Advanced)"
+    }
+  },
+  "46": {
+    "inputs": {
+      "text": "Manchester United Player, Frontal Half body face portrait, Male, Medium skin tone, 50mm, Man gender, Short hair, element, Stadium Background, Ultra-realistic render",
+      "clip": [
+        "43",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "47": {
+    "inputs": {
+      "text": "unrealistic, full body, multiple people, bad quality, sexism, nude legs, blurry, unreal, mask, helmet, face-cover, mask, bad anatomy, cartoon, unreal, animate, mask, nudity, nsfw, full body, male, multiple people,(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck",
+      "clip": [
+        "43",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "48": {
+    "inputs": {
+      "samples": [
+        "45",
+        0
+      ],
+      "vae": [
+        "43",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "52": {
+    "inputs": {
+      "preset": "FACEID PLUS V2",
+      "lora_strength": 0.2,
+      "provider": "CPU",
+      "model": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoaderFaceID",
+    "_meta": {
+      "title": "IPAdapter Unified Loader FaceID"
+    }
+  },
+  "53": {
+    "inputs": {
+      "image": "matoshi-portrait.jpg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "55": {
+    "inputs": {
+      "weight": 0.2,
+      "start_at": 0,
+      "end_at": 1,
+      "weight_type": "standard",
+      "model": [
+        "52",
+        0
+      ],
+      "ipadapter": [
+        "52",
+        1
+      ],
+      "image": [
+        "53",
+        0
+      ]
+    },
+    "class_type": "IPAdapter",
+    "_meta": {
+      "title": "IPAdapter"
+    }
+  },
+  "56": {
+    "inputs": {
+      "enabled": true,
+      "swap_model": "inswapper_128.onnx",
+      "facedetection": "YOLOv5n",
+      "face_restore_model": "codeformer.pth",
+      "face_restore_visibility": 0.9,
+      "codeformer_weight": 0.5,
+      "detect_gender_input": "no",
+      "detect_gender_source": "no",
+      "input_faces_index": "0",
+      "source_faces_index": "0",
+      "console_log_level": 1,
+      "input_image": [
+        "48",
+        0
+      ],
+      "source_image": [
+        "53",
+        0
+      ]
+    },
+    "class_type": "ReActorFaceSwap",
+    "_meta": {
+      "title": "ReActor - Fast Face Swap"
+    }
+  },
+  "57": {
+    "inputs": {
+      "images": [
+        "60",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "60": {
+    "inputs": {
+      "sharpen_radius": 1,
+      "sigma": 0.6000000000000001,
+      "alpha": 0.30000000000000004,
+      "image": [
+        "56",
+        0
+      ]
+    },
+    "class_type": "ImageSharpen",
+    "_meta": {
+      "title": "ImageSharpen"
+    }
+  }
+}

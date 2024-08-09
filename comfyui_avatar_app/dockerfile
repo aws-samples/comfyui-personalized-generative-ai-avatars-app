@@ -1,0 +1,60 @@
+# Stage 1: build image with dependencies
+FROM python:3.11-slim-bookworm AS builder
+
+WORKDIR /app
+COPY requirements.txt .
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        libc6-dev \
+        libsqlite3-dev \
+        zlib1g-dev \
+        libexpat1-dev \
+        perl \
+        libsqlite3-0 \
+        zlib1g \
+        libexpat1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+    
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+
+# Stage 2: build final image
+FROM python:3.11-slim-bookworm
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 1000 user
+
+USER user
+
+COPY --from=builder /usr/local /usr/local
+COPY avatar_app.py ./avatar_app.py
+COPY .streamlit/config.toml ./.streamlit/config.toml 
+
+# COPY ComfyUI Workflow API
+COPY avatar_api.json ./avatar_api.json
+COPY avatar_api_sd15.json ./avatar_api_sd15.json
+COPY dreamshaper_api.json ./dreamshaper_api.json
+
+# COPY prompt presets
+COPY negative_prompts.json ./negative_prompts.json
+COPY presets_football_prompts.json ./presets_football_prompts.json
+COPY presets_scifi_prompts.json ./presets_scifi_prompts.json
+COPY presets_sports_prompts.json ./presets_sports_prompts.json
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "avatar_app.py", \
+    "--server.headless=true", \
+    "--server.address=0.0.0.0", \
+    "--server.enableCORS=true",  \
+    "--server.port=8501", \
+    "--browser.serverPort=8501"]

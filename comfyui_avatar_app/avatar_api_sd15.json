@@ -1,0 +1,180 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "realistic-fantasy-sd15.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "2": {
+    "inputs": {
+      "text": "Bioplasma Elemental Male Hero \nElement: Bioplasma\nTitle: Bioplasma elemental Male life-cultivator\nLens: 80mm\nStyle: Photorealistic\nFeatures: Body formed of iridescent bioplasmic energy, skin glowing with vibrant, pulsating light.\nAttire: Bio-augmented suit that channels and focuses his energies into restorative plasma waves.\nPose: frontal medium-shot portrait.\nBackground: A once barren landscape, now blossoming with verdant life, as flora and fauna thrive under his bioplasmic stewardship.",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "6": {
+    "inputs": {
+      "width": 512,
+      "height": 640,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage"
+  },
+  "9": {
+    "inputs": {
+      "images": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "PreviewImage"
+  },
+  "16": {
+    "inputs": {
+      "enabled": true,
+      "swap_model": "inswapper_128.onnx",
+      "facedetection": "retinaface_resnet50",
+      "face_restore_model": "codeformer.pth",
+      "face_restore_visibility": 1,
+      "codeformer_weight": 0.7000000000000001,
+      "detect_gender_source": "no",
+      "detect_gender_input": "no",
+      "source_faces_index": "0",
+      "input_faces_index": "0",
+      "console_log_level": 1,
+      "input_image": [
+        "23",
+        0
+      ],
+      "source_image": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "ReActorFaceSwap"
+  },
+  "17": {
+    "inputs": {
+      "image": "matoshi-portrait.jpg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "20": {
+    "inputs": {
+      "text": "unrealistic, full body, multiple people, bad quality, sexism, nude legs, blurry, unreal, mask, helmet, face-cover, mask, bad anatomy, cartoon, unreal, animate, mask, nudity, nsfw, full body, female, multiple people,(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "22": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 619575234694480,
+      "steps": 30,
+      "cfg": 5.5,
+      "sampler_name": "ddim",
+      "scheduler": "karras",
+      "start_at_step": 0,
+      "end_at_step": 1001,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "2",
+        0
+      ],
+      "negative": [
+        "20",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced"
+  },
+  "23": {
+    "inputs": {
+      "samples": [
+        "22",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "48": {
+    "inputs": {
+      "facedetection": "retinaface_resnet50",
+      "codeformer_fidelity": 0.4,
+      "facerestore_model": [
+        "49",
+        0
+      ],
+      "image": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "FaceRestoreCFWithModel"
+  },
+  "49": {
+    "inputs": {
+      "model_name": "GFPGANv1.4.pth"
+    },
+    "class_type": "FaceRestoreModelLoader"
+  },
+  "76": {
+    "inputs": {
+      "sharpen_radius": 1,
+      "sigma": 0.5000000000000001,
+      "alpha": 0.2000000000000004,
+      "image": [
+        "48",
+        0
+      ]
+    },
+    "class_type": "ImageSharpen"
+  },
+  "77": {
+    "inputs": {
+      "images": [
+        "82",
+        0
+      ]
+    },
+    "class_type": "PreviewImage"
+  },
+  "81": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2.pth"
+    },
+    "class_type": "UpscaleModelLoader"
+  },
+  "82": {
+    "inputs": {
+      "upscale_model": [
+        "81",
+        0
+      ],
+      "image": [
+        "76",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel"
+  }
+}

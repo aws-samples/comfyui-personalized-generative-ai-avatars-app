@@ -1,0 +1,62 @@
+[
+  {
+    "Club": "Bayer Leverkusen",
+    "prompt": "Bayer Leverkusen Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Leverkusen team jersey,\nBayArena Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "FC Bayern München",
+    "prompt": "FC Bayern München Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Bayern team jersey,\nAllianz Arena Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "VfB Stuttgart",
+    "prompt": "VfB Stuttgart Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Stuttgart team jersey,\nMercedes-Benz Arena Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "RB Leipzig",
+    "prompt": "RB Leipzig Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Leipzig team jersey,\nRed Bull Arena Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Borussia Dortmund",
+    "prompt": "Borussia Dortmund Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Dortmund team jersey,\nSignal Iduna Park Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Eintracht Frankfurt",
+    "prompt": "Eintracht Frankfurt Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Frankfurt team jersey,\nDeutsche Bank Park Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Manchester United",
+    "prompt": "Manchester United Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Manchester United team jersey,\nOld Trafford Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Arsenal London",
+    "prompt": "Arsenal London Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Arsenal team jersey,\nEmirates Stadium Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Liverpool",
+    "prompt": "Liverpool Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Liverpool team jersey,\nAnfield Stadium Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Real Madrid",
+    "prompt": "Real Madrid Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Real Madrid team jersey,\nSantiago Bernabéu Stadium Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "FC Barcelona",
+    "prompt": "FC Barcelona Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Barcelona team jersey,\nCamp Nou Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Atletico De Madrid",
+    "prompt": "Atletico De Madrid Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Atletico Madrid team jersey,\nWanda Metropolitano Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "AC Milan",
+    "prompt": "AC Milan Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Milan team jersey,\nSan Siro Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Juventus",
+    "prompt": "Juventus Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official Juventus team jersey,\nAllianz Stadium Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  },
+  {
+    "Club": "Paris Saint-Germain",
+    "prompt": "Paris Saint-Germain Football Player,\nFrontal medium-shot face portrait,\nMale,\nWearing official PSG team jersey,\nParc des Princes Stadium Background,\nFeatures: \nUltra--realistic, 8k resolution"
+  }
+]

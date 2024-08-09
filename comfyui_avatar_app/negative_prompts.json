@@ -1,0 +1,18 @@
+[
+    {
+      "negative_prompt": "default",
+      "prompt": "(((NSFW))),full body, multiple people, bad quality, sexism, nude legs, blurry, unreal, mask, helmet, face-cover, mask, bad anatomy, cartoon, unreal, animate, mask, nudity, nsfw, full body, multiple people,(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck"
+    },
+    {
+        "negative_prompt": "scifi",
+        "prompt": "(((NSFW))),full body, multiple people, naked skin, bad quality, sexism, nude legs, blurry, unreal, mask, helmet, face-cover, mask, bad anatomy, cartoon, unreal, animate, mask, nudity, nsfw, full body, multiple people,(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck"
+      },
+    {
+      "negative_prompt": "football",
+      "prompt": "unrealistic, (bad logo:1.6), (wrong logo:1.5), full body, multiple people, bad quality, sexism, nude legs, long neck, blurry, unreal, mask, helmet, face-cover, mask, bad anatomy, cartoon, unreal, animate, mask, nudity, nsfw, full body, multiple people,(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime)"
+    },
+    {
+      "negative_prompt": "other sports",
+      "prompt": "unrealistic, (bad logo:1.6), (wrong logo:1.5), full body, multiple people, bad quality, sexism, nude legs, long neck, blurry, unreal, mask, helmet, face-cover, mask, bad anatomy, cartoon, unreal, animate, mask, nudity, nsfw, full body, multiple people,(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime)"
+    }
+]

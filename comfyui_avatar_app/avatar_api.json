@@ -1,0 +1,183 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "realistic-fantasy-sd15.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "2": {
+    "inputs": {
+      "text": "Time manipulation superhero, sci-fi, frontal half body portrait, 80mm, man, clock element, space-time vortex background, ultra-realistic render ",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "3": {
+    "inputs": {
+      "text": "bad quality, blurry, unreal, mask, helmet, face-cover, mask, bad anatomy, cartoon, unreal, animate, mask, nudity, nsfw",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "4": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 590823373910258,
+      "cfg": 3.7,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "2",
+        0
+      ],
+      "negative": [
+        "3",
+        0
+      ],
+      "sampler": [
+        "5",
+        0
+      ],
+      "sigmas": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "SamplerCustom",
+    "_meta": {
+      "title": "SamplerCustom"
+    }
+  },
+  "5": {
+    "inputs": {
+      "sampler_name": "ddim"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "6": {
+    "inputs": {
+      "width": 768,
+      "height": 1104,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "7": {
+    "inputs": {
+      "steps": 10,
+      "denoise": 1,
+      "model": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "SDTurboScheduler",
+    "_meta": {
+      "title": "SDTurboScheduler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "4",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "16": {
+    "inputs": {
+      "enabled": true,
+      "swap_model": "inswapper_128.onnx",
+      "facedetection": "retinaface_resnet50",
+      "face_restore_model": "GFPGANv1.4.pth",
+      "face_restore_visibility": 1,
+      "codeformer_weight": 1,
+      "detect_gender_source": "no",
+      "detect_gender_input": "no",
+      "source_faces_index": "0",
+      "input_faces_index": "0",
+      "console_log_level": 1,
+      "input_image": [
+        "8",
+        0
+      ],
+      "source_image": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "ReActorFaceSwap",
+    "_meta": {
+      "title": "ReActor - Fast Face Swap"
+    }
+  },
+  "17": {
+    "inputs": {
+      "image": "lperroz-lower-res-current-photo.jpeg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "18": {
+    "inputs": {
+      "images": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  }
+}

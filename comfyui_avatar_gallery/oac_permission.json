@@ -1,0 +1,123 @@
+{
+    "Sid": "AllowCloudFrontServicePrincipalSSE-KMS",
+    "Effect": "Allow",
+    "Principal": {
+        "Service": [
+            "cloudfront.amazonaws.com"
+        ]
+     },
+    "Action": [
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:GenerateDataKey*"
+    ],
+    "Resource": "*",
+    "Condition": {
+            "StringEquals": {
+                "AWS:SourceArn": "arn:aws:cloudfront::111122223333:distribution/<CloudFront distribution ID>"
+            }
+        }
+}
+
+{
+    "Version": "2012-10-17",
+    "Statement": {
+        "Sid": "AllowCloudFrontServicePrincipalReadWrite",
+        "Effect": "Allow",
+        "Principal": {
+            "Service": "cloudfront.amazonaws.com"
+        },
+        "Action": [
+            "s3:GetObject",
+            "s3:PutObject"
+        ],
+        "Resource": "arn:aws:s3:::<S3 bucket name>/*",
+        "Condition": {
+            "StringEquals": {
+                "AWS:SourceArn": "arn:aws:cloudfront::111122223333:distribution/<CloudFront distribution ID>"
+            }
+        }
+    }
+}
+
+
+
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::894709276161:role/ComfyUIStack-CustomS3AutoDeleteObjectsCustomResourc-M8JJeiwTWi4B"
+            },
+            "Action": [
+                "s3:DeleteObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:PutBucketPolicy"
+            ],
+            "Resource": [
+                "arn:aws:s3:::comfyui-avatar-app-xyz",
+                "arn:aws:s3:::comfyui-avatar-app-xyz/*"
+            ]
+        },{
+            "Sid": "AllowCloudFrontServicePrincipalRead",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+            },
+            "Action": [
+                "s3:GetObject",
+                "s3:ListObject"
+            ],
+            "Resource": "arn:aws:s3:::comfyui-avatar-app-xyz/*",
+            "Condition": {
+                "StringEquals": {
+                    "AWS:SourceArn": "arn:aws:cloudfront::894709276161:distribution/E15LYV3MHXPY3T"
+                }
+            }
+        }
+    ]
+}
+
+
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::<myaccountid>:role/ComfyUIStack-CustomS3AutoDeleteObjectsCustomResourc-M8JJeiwTWi4B"
+            },
+            "Action": [
+                "s3:DeleteObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:PutBucketPolicy"
+            ],
+            "Resource": [
+                "arn:aws:s3:::comfyui-avatar-app-xyz",
+                "arn:aws:s3:::comfyui-avatar-app-xyz/*"
+            ]
+        },
+        {
+            "Sid": "AllowCloudFrontServicePrincipalRead",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+            },
+            "Action": [
+                "s3:GetObject",
+                "s3:List*"
+            ],
+            "Resource": "arn:aws:s3:::comfyui-avatar-app-xyz/*",
+            "Condition": {
+                "StringEquals": {
+                    "AWS:SourceArn": "arn:aws:cloudfront::<myaccountid>:distribution/E15LYV3MHXPY3T"
+                }
+            }
+        }
+    ]
+}
