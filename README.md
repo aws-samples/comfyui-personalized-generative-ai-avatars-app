@@ -287,12 +287,19 @@ Current contributors:
 
 ## License
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
+Although this repository is released under the MIT-0 license, its examples of workflows and custom_nodes 
+use the third party projects:
+- [ComfyUI](https://github.com/comfyanonymous/ComfyUI)
+- [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager)
+- [ComfyUI IPAdapter Plus](https://github.com/cubiq/ComfyUI_IPAdapter_plus)
+- [ReActor Node for ComfyUI](https://github.com/Gourieff/comfyui-reactor-node)
 
+These project's licensing includes the [GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0.html) license.
+
+Further details you can find here:
 - [License](LICENSE) of the project.
 - [Code of Conduct](CONTRIBUTING.md#code-of-conduct) of the project.
 - [THIRD-PARTY](THIRD-PARTY) for more information about third party usage
-
 
 
 ## Acknowledgements
