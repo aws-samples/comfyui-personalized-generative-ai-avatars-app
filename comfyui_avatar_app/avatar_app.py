@@ -15,8 +15,6 @@ import base64
 from streamlit_cognito_auth import CognitoAuthenticator
 from botocore.exceptions import ClientError
 
-#TODO update link to GitHub Link afterwards
-
 st.set_page_config(
     layout="wide",
     page_title="Personalized Generative AI Avatars"
@@ -393,10 +391,10 @@ if st.session_state['authenticated']:
     st.header("",divider='rainbow')
 
     st.markdown(''' #### :information_source:   Disclaimer  
-    - Uploaded images are :green[deleted after the event]
-    - Generated avatars are :green[not displayed in the gallery without consent (click on share avatar)]
+    - Uploaded user images are :green[deleted after the event]
+    - Generated avatars are :green[only displayed in the gallery with consent (click on share avatar)]
     - The application is fully automated. We have included guardails in place to moderate unintented content
-    - Powered by ComfyUI AWS Sample: [cost-effective-aws-deployment-of-comfyui](https://github.com/aws-samples/cost-effective-aws-deployment-of-comfyui)
+    - Powered by AWS Sample: [comfyui-personalized-generative-ai-avatars-app](https://github.com/aws-samples/comfyui-personalized-generative-ai-avatars-app)
     ''', unsafe_allow_html=True)
     
     if st.button("Logout"):
@@ -439,7 +437,7 @@ if st.session_state['authenticated']:
         st.warning("Backend (ComfyUI) is not available. Please check your ComfyUI configuration.")
     else:
         st.header("Upload or Capture an Image")
-        uploaded_file = st.file_uploader("Or upload a portrait image from your device:", type=['png', 'jpg', 'jpeg'], accept_multiple_files=False, key=st.session_state["file_uploader_key"])
+        uploaded_file = st.file_uploader("click on \"Browse files\"", type=['png', 'jpg', 'jpeg'], accept_multiple_files=False, key=st.session_state["file_uploader_key"])
         if uploaded_file is not None:
             if st.session_state.get('img_file_buffer') != uploaded_file:
                 clear_session_state()
@@ -579,18 +577,24 @@ if st.session_state['authenticated']:
                         preset_prompt = preset_prompt.replace("gender", "nonbinary gender")
                     
                     avatar_hair = st.radio("Hair length",
-                        ["Short", "Long"], horizontal=True, index=round(st.session_state["rnd3"]/rnd3_max))
+                        ["Short", "Medium", "Long", "No Hair"], horizontal=True, index=round(st.session_state["rnd3"]/rnd3_max))
                     
-                    avatar_hair_color = st.radio("Hair color",
-                        ["Blonde", "Brown", "Black", "Red", "Blue", "Green", "Purple", "Grey", "Random"], horizontal=True, index=round(st.session_state["rnd4"]/rnd4_max))
-                    
+                    if avatar_hair == "No Hair":
+                        avatar_hair_color = "no color"
+                    else:
+                        avatar_hair_color = st.radio("Hair color",
+                            ["Blonde", "Brown", "Black", "Red", "Blue", "Green", "Purple", "Grey", "Random"], horizontal=True, index=round(st.session_state["rnd4"]/rnd4_max))
+                
                     avatar_skin_tone = st.radio("Skin Tone",
                         ["Light", "Medium", "Dark"], horizontal=True, index=round(st.session_state["rnd7"]/rnd7_max))
                     
-                    avatar_face_expr = st.radio("Face Expression",
+                    avatar_face_expr = st.radio("Facial Expression",
                         ["Serious", "Happy"], horizontal=True, index=round(st.session_state["rnd8"]/rnd8_max))
                     
-                    features = avatar_face_expr+" face, "+avatar_skin_tone+" skin tone, "+avatar_hair+" "+avatar_hair_color+" hair,  "
+                    if avatar_hair == "No Hair":
+                        features = avatar_face_expr+" face, "+avatar_skin_tone+" skin tone, "+avatar_hair+", bald,  "
+                    else:
+                        features = avatar_face_expr+" face, "+avatar_skin_tone+" skin tone, "+avatar_hair+" "+avatar_hair_color+" hair, "
                     
                     preset_prompt = preset_prompt.replace("Features:", "Features: "+features)
 
@@ -638,7 +642,7 @@ if st.session_state['authenticated']:
                                 # Share Avatar
                                 if st.button('Share your avatar!', key="share_avatar", disabled= st.session_state["avatar_created"]):
                                     share_avatar(st.session_state["avatar_final_image"])
-                                    st.text("Image shared!")
+                                    st.text("Image shared to Gallery!")
                             else:
                                 st.warning("Image has been moderated and will not be shown")
 

@@ -65,8 +65,6 @@ Notes:
 Author: Pajtim Matoshi
 """
 
-#TODO Optimization of Lambda Utils. Downscaling should also downscale ECS Service of ComfyUI properly
-
 # these environment variables needs to be set, that the stack is deployable.
 certificate_arn = os.environ.get('CERTIFICATE_ARN')
 cloudfront_prefix_list_id = os.environ.get('CLOUDFRONT_PREFIX_LIST_ID')

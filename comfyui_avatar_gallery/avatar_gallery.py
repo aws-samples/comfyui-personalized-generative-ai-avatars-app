@@ -4,6 +4,7 @@ from PIL import Image
 import io, os, time
 from streamlit_cognito_auth import CognitoAuthenticator
 from streamlit_extras.stylable_container import stylable_container
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(layout="wide")
 
@@ -23,18 +24,22 @@ authenticator = CognitoAuthenticator(
 
 cognito_client = boto3.client('cognito-idp')
 
-def is_admin_profile():
+def get_user_profile():
     credentials = authenticator.get_credentials()
     response = cognito_client.get_user(AccessToken=credentials.access_token)
     user_attributes = response['UserAttributes']
-    # st.sidebar.markdown(f"## User Attributes : {user_attributes}")
-    is_admin_profile = False 
     
     for attribute in user_attributes:
-        if attribute['Name'] == "profile" and attribute['Value'] == 'admin':
-            is_admin_profile = True
-            break
-    return is_admin_profile
+        if attribute['Name'] == "profile":
+            return attribute['Value']
+    return None
+
+def is_authorized_profile():
+    profile = get_user_profile()
+    return profile in ['admin', 'gallery']
+
+def is_admin_profile():
+    return get_user_profile() == 'admin'
 
 def get_user_attributes():
     credentials = authenticator.get_credentials()
@@ -50,19 +55,19 @@ def get_authenticated_status():
     is_logged_in = authenticator.login()
     return is_logged_in
 
-is_logged_in = get_authenticated_status()
+def move_image(bucket, source_key, dest_key):
+    copy_source = {'Bucket': bucket, 'Key': source_key}
+    s3_client.copy_object(CopySource=copy_source, Bucket=bucket, Key=dest_key)
+    s3_client.delete_object(Bucket=bucket, Key=source_key)
 
-if is_logged_in:
-    st.session_state['authenticated'] = True
-if not is_logged_in:
-    st.stop()
-
+@st.cache_data(ttl=120)
 def load_image_from_s3(bucket, key):
     response = s3_client.get_object(Bucket=bucket, Key=key)
     image_content = response['Body'].read()
     image = Image.open(io.BytesIO(image_content))
     return image
 
+@st.cache_data(ttl=60)
 def list_images_in_bucket(bucket, prefix):
     images = []
     continuation_token = None
@@ -80,11 +85,6 @@ def list_images_in_bucket(bucket, prefix):
             break
     return images
 
-def move_image(bucket, source_key, dest_key):
-    copy_source = {'Bucket': bucket, 'Key': source_key}
-    s3_client.copy_object(CopySource=copy_source, Bucket=bucket, Key=dest_key)
-    s3_client.delete_object(Bucket=bucket, Key=source_key)
-
 def display_gallery(images, cols_per_row, is_admin=False):
     col_index = 0
     cols = st.columns(cols_per_row, gap="small")
@@ -97,7 +97,7 @@ def display_gallery(images, cols_per_row, is_admin=False):
                 
                 if image_key.split("/")[0]+"/" == bucket_prefix:
                     with stylable_container(
-                        key="green_button",
+                        key=f"green_button_{i}",
                         css_styles="""
                             button {
                                 background-color: green;
@@ -106,13 +106,14 @@ def display_gallery(images, cols_per_row, is_admin=False):
                             }
                             """,
                     ):
-                        if st.button("promote", key=f'delete_{i}', use_container_width=True):
+                        if st.button("promote", key=f'promote_{i}', use_container_width=True):
                             move_image(bucket_name, image_key, f'gallery/{image_key.split("/")[-1]}')
+                            st.session_state['refresh_gallery'] = True
                             st.rerun()
                 
                 if image_key.split("/")[0] == 'gallery':
                     with stylable_container(
-                    key="red_button",
+                    key=f"red_button_{i}",
                     css_styles="""
                         button {
                             background-color: red;
@@ -123,39 +124,76 @@ def display_gallery(images, cols_per_row, is_admin=False):
                     ):
                         if st.button("moderate", key=f'moderate_{i}', use_container_width=True):
                             move_image(bucket_name, image_key, f'{bucket_prefix}{image_key.split("/")[-1]}')
+                            st.session_state['refresh_gallery'] = True
                             st.rerun()
         col_index = (col_index + 1) % cols_per_row
+def toggle_auto_refresh():
+    st.session_state['auto_refresh'] = not st.session_state.get('auto_refresh', True)
+
+# Main application logic
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
+if 'refresh_gallery' not in st.session_state:
+    st.session_state['refresh_gallery'] = False
+if 'cols_per_row' not in st.session_state:
+    st.session_state['cols_per_row'] = 10
+if 'auto_refresh' not in st.session_state:
+    st.session_state['auto_refresh'] = True
+
+is_logged_in = get_authenticated_status()
+
+if is_logged_in:
+    if is_authorized_profile():
+        st.session_state['authenticated'] = True
+        st.session_state['is_admin'] = is_admin_profile()
+    else:
+        st.error("You do not have the required permissions to access this application.")
+        logout()
+        st.stop()
+if not is_logged_in:
+    st.stop()
+
 if st.session_state['authenticated']:
-   
     st.markdown("<h1 style='text-align: center;'>🚀 GET YOUR GENERATIVE AI AVATAR 🚀</h1>", unsafe_allow_html=True)
     st.header("",divider='rainbow')
-    cols_per_row = st.sidebar.slider("Columns per row", min_value=1, max_value=25, value=6)
+    
+    new_cols_per_row = st.sidebar.slider("Columns per row", min_value=1, max_value=25, value=st.session_state['cols_per_row'])
+    
+    if new_cols_per_row != st.session_state['cols_per_row']:
+        st.session_state['cols_per_row'] = new_cols_per_row
+        st.session_state['refresh_gallery'] = True
+        list_images_in_bucket.clear()
+        load_image_from_s3.clear()
+
+    # Add the auto-refresh toggle button to the sidebar
+    auto_refresh_text = "Deactivate" if st.session_state['auto_refresh'] else "Activate"
+    if st.sidebar.button(f"{auto_refresh_text} Auto-Refresh", use_container_width=True, on_click=toggle_auto_refresh):
+        st.rerun()
+
     st.sidebar.markdown("<h2 style='text-align: center;'>🚀 SCAN THIS QR-CODE 🚀</h1>", unsafe_allow_html=True)
-    st.sidebar.markdown("<h3 style='text-align: center;'>user: xyz</h1>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h3 style='text-align: center;'>user: tbd</h1>", unsafe_allow_html=True)
     st.sidebar.markdown("<h3 style='text-align: center;'>pwd: tbd</h1>", unsafe_allow_html=True)
     st.sidebar.image("qr-code.png")
+    
     if st.sidebar.button("Logout", key="logout", use_container_width=True):
         logout()
-    is_admin = is_admin_profile()
-    # while True:
-    #     if is_admin:
-    #         images = list_images_in_bucket(bucket_name, bucket_prefix)
-    #         images += list_images_in_bucket(bucket_name, 'gallery/')
-    #         display_gallery(images, cols_per_row, is_admin=True)
-    #     else:
-    #         images = list_images_in_bucket(bucket_name, 'gallery/')
-    #         display_gallery(images, cols_per_row, is_admin=False)
-    #     time.sleep(15)
-    #     st.rerun()
-    if is_admin:
-        print(bucket_prefix)
+
+    # Use st_autorefresh
+    if st.session_state['auto_refresh'] and not st.session_state['is_admin']:
+        refresh_interval = 60
+        st_autorefresh(interval=refresh_interval * 1000, key="datarefresh")
+
+    if st.session_state['is_admin']:
+        # Admin-only features
         images = list_images_in_bucket(bucket_name, bucket_prefix)
         images += list_images_in_bucket(bucket_name, 'gallery/')
-        images += list_images_in_bucket(bucket_name, 'avatars_backup_mediaentday/')
-        
-        display_gallery(images, cols_per_row, is_admin=True)
+        display_gallery(images, st.session_state['cols_per_row'], is_admin=True)
     else:
         images = list_images_in_bucket(bucket_name, 'gallery/')
-        display_gallery(images, cols_per_row, is_admin=False)
+        display_gallery(images, st.session_state['cols_per_row'], is_admin=False)
+
+    # Clear caches if refresh is needed
+    if st.session_state['refresh_gallery']:
+        st.session_state['refresh_gallery'] = False
+        list_images_in_bucket.clear()
+        load_image_from_s3.clear()
