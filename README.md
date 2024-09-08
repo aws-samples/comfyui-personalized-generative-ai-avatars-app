@@ -217,6 +217,8 @@ Application Features:
 Application Features:
 - Default implementation with dual login mode (admin and user) to provide control over shared content
    -  this option can be changed in the `avatar_gallery.py`
+   -  user attribute `profile` must be set to `admin` in cognito for having the admin functionality
+   -  user attribute `profile` must be set to `gallery` in cognito for having the gallery visible
 - Admin mode (setup through `cognito_post_deploy_fix.py`): 
    - access to all the images shared from users 
    - content moderation capability to accept or moderate images
