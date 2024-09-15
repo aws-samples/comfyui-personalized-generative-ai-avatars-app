@@ -152,6 +152,7 @@ class ComfyUIStack(Stack):
         comfyui_alb_security_group = ec2.SecurityGroup(
             self,
             "ComfyUIALBSecurityGroup",
+            security_group_name="ComfyUIALBSecurityGroup",
             vpc=vpc,
             description="Security group for ComfyUI ALB"
         )
@@ -160,6 +161,7 @@ class ComfyUIStack(Stack):
         asg_security_group = ec2.SecurityGroup(
             self,
             "AsgSecurityGroup",
+            security_group_name="ComfyUIAsgSecurityGroup",
             vpc=vpc,
             description="Security Group for ASG",
             allow_all_outbound=True,
@@ -202,7 +204,7 @@ class ComfyUIStack(Stack):
             "ASG",
             auto_scaling_group_name=asg_name,
             vpc=vpc,
-            instance_type=ec2.InstanceType("g5.4xlarge"),
+            instance_type=ec2.InstanceType("g5.xlarge"),
             machine_image=ecs.EcsOptimizedImage.amazon_linux2(
                 hardware_type=ecs.AmiHardwareType.GPU
             ),
@@ -360,8 +362,8 @@ class ComfyUIStack(Stack):
             "ComfyUIContainer",
             image=ecs.ContainerImage.from_ecr_repository(ecr_repository, "latest"),
             gpu_count=1,
-            memory_limit_mib=59392,
-            cpu=15360,
+            memory_limit_mib=15700,
+            cpu=4000,
             logging=ecs.LogDriver.aws_logs(stream_prefix="comfy-ui", log_group=log_group),
             health_check=ecs.HealthCheck(
                 command=["CMD-SHELL", "curl -f http://localhost:8181/system_stats || exit 1"],
@@ -396,6 +398,7 @@ class ComfyUIStack(Stack):
         ecs_service_security_group = ec2.SecurityGroup(
             self,
             "ServiceSecurityGroup",
+            security_group_name="ComfyUIServiceSecurityGroup",
             vpc=vpc,
             description="Security Group for ComfyUI ECS Service",
             allow_all_outbound=True,
@@ -937,6 +940,7 @@ class ComfyUIStack(Stack):
             avatar_alb_security_group = ec2.SecurityGroup(
                 self,
                 "AvatarALBSecurityGroup",
+                security_group_name="AvatarALBSecurityGroup",
                 vpc=vpc,
                 description="Security group for Avatar ALB"
             )
@@ -1192,6 +1196,7 @@ class ComfyUIStack(Stack):
             # Combined Security Group for Avatar App and optional Gallery
             avatar_services_security_group = ec2.SecurityGroup(
                 self, "AvatarServicesSecurityGroup",
+                security_group_name="AvatarServicesSecurityGroup",
                 vpc=vpc,
                 description="Security Group for Avatar ECS Services",
                 allow_all_outbound=True,
@@ -1252,6 +1257,7 @@ class ComfyUIStack(Stack):
             avatar_app_service = ecs.FargateService(
                 self,
                 "AvatarAppFargateService",
+                service_name="AvatarAppService",
                 cluster=cluster,
                 task_definition=avatar_app_task_definition,
                 desired_count=1,
@@ -1362,6 +1368,7 @@ class ComfyUIStack(Stack):
                 avatar_gallery_service = ecs.FargateService(
                     self,
                     "AvatarGalleryFargateService",
+                    service_name="AvatarGalleryService",
                     cluster=cluster,
                     task_definition=avatar_gallery_task_definition,
                     desired_count=1,
