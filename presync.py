@@ -5,7 +5,6 @@ import sys
 import hashlib
 import boto3
 import requests
-from urllib.parse import urlparse
 import shutil
 from botocore.exceptions import ClientError
 from tqdm import tqdm
