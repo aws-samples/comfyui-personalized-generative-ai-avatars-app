@@ -824,8 +824,8 @@ class ComfyUIStack(Stack):
         )
 
         admin_lambda.add_environment("ECS_CLUSTER_NAME", cluster.cluster_name)
-        admin_lambda.add_environment("WORKFLOW_ASG_NAME", comfyui_workflow_service.service_name)
-        admin_lambda.add_environment("WORKFLOW_SERVICE_NAME", comfyui_workflow_asg.auto_scaling_group_name)
+        admin_lambda.add_environment("WORKFLOW_SERVICE_NAME", comfyui_workflow_service.service_name)
+        admin_lambda.add_environment("WORKFLOW_ASG_NAME", comfyui_workflow_asg.auto_scaling_group_name)
         admin_lambda.add_environment("LISTENER_ARN", comfyui_listener.listener_arn)
 
         comfyui_workflow_asg.add_lifecycle_hook(

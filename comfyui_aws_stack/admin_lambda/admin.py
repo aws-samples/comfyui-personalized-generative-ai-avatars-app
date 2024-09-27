@@ -50,11 +50,24 @@ def get_status():
         status = {}
         
         # Workflow status
-        workflow_asg = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[os.environ['WORKFLOW_ASG_NAME']])['AutoScalingGroups'][0]
-        workflow_service = ecs_client.describe_services(
-            cluster=os.environ['ECS_CLUSTER_NAME'],
-            services=[os.environ['WORKFLOW_SERVICE_NAME']]
-        )['services'][0]
+        workflow_asg_name = os.environ['WORKFLOW_ASG_NAME']
+        workflow_service_name = os.environ['WORKFLOW_SERVICE_NAME']
+        ecs_cluster_name = os.environ['ECS_CLUSTER_NAME']
+
+        asg_response = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[workflow_asg_name])
+        if not asg_response['AutoScalingGroups']:
+            return {'error': f'Auto Scaling Group {workflow_asg_name} not found'}
+        
+        workflow_asg = asg_response['AutoScalingGroups'][0]
+
+        ecs_response = ecs_client.describe_services(
+            cluster=ecs_cluster_name,
+            services=[workflow_service_name]
+        )
+        if not ecs_response['services']:
+            return {'error': f'ECS Service {workflow_service_name} not found'}
+        
+        workflow_service = ecs_response['services'][0]
 
         status['workflow'] = {
             'desired': workflow_asg['DesiredCapacity'],
@@ -66,11 +79,23 @@ def get_status():
 
         # API status (only if environment variables are set)
         if os.environ.get('API_ASG_NAME') and os.environ.get('API_SERVICE_NAME'):
-            api_asg = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[os.environ['API_ASG_NAME']])['AutoScalingGroups'][0]
-            api_service = ecs_client.describe_services(
-                cluster=os.environ['ECS_CLUSTER_NAME'],
-                services=[os.environ['API_SERVICE_NAME']]
-            )['services'][0]
+            api_asg_name = os.environ['API_ASG_NAME']
+            api_service_name = os.environ['API_SERVICE_NAME']
+
+            asg_response = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[api_asg_name])
+            if not asg_response['AutoScalingGroups']:
+                return {'error': f'Auto Scaling Group {api_asg_name} not found'}
+            
+            api_asg = asg_response['AutoScalingGroups'][0]
+
+            ecs_response = ecs_client.describe_services(
+                cluster=ecs_cluster_name,
+                services=[api_service_name]
+            )
+            if not ecs_response['services']:
+                return {'error': f'ECS Service {api_service_name} not found'}
+            
+            api_service = ecs_response['services'][0]
             
             status['api'] = {
                 'desired': api_asg['DesiredCapacity'],
@@ -81,9 +106,16 @@ def get_status():
             }
 
         return status
+    except KeyError as e:
+        print(f"Environment variable not set: {e}")
+        return {'error': f'Missing environment variable: {e}'}
     except ClientError as e:
-        print(f"Error getting status: {e}")
-        return {'error': 'Failed to get status'}
+        print(f"AWS API error: {e}")
+        return {'error': f'AWS API error: {e}'}
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return {'error': f'Unexpected error occurred'}
+
 def check_and_update_listener_rule():
     try:
         workflow_asg_name = os.environ['WORKFLOW_ASG_NAME']
