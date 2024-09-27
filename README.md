@@ -247,6 +247,18 @@ Application Features:
    - Only access the images that are accepted from the admin
 - Displayed login credentials and qr-code on the left sidebar for fast access from mobile device (must be updated according to your setup)
 
+### ComfyUI Admin Dashboard
+!["ComfyUI Admin Dashboard"](media/comfyui-admin-dashboard.png)
+
+Application Features:
+- accessed over <your-comfyui-url>/admin
+- only accessible if you already authenticated yourself over cognito
+- Scale up and down ComfYUI Workflow or API Instances
+- Restart the ECS Service
+- does behind the scenes change the priority rules in ALB if ComfyUI is scaled to zero
+- Refresh Button for refreshing the status
+- Magic Button for some magic action  
+
 ## Uploading additional Models
 
 If you have run the `presync.py` then you have already the required models uploaded. The script [upload_models.sh](comfyui_config/upload_models.sh) contains a helper snippet to upload a wider selection of additional models, loras and ComfyUI custom models. An example of how to access to the EC2 instance, the ComfyUI container and to download of the components is shown below:
