@@ -9,3 +9,6 @@ export RECORD_NAME_COMFYUI=<your-subdomain1> # e.g. "comfyui.${ZONE_NAME}"
 # following variables needs only to be set if you choose DeploymentType ComfyUIWithAvatarApp / FullStack
 export RECORD_NAME_AVATAR_APP=<your-subdomain2> # e.g. "avatar-app.${ZONE_NAME}"
 export RECORD_NAME_AVATAR_GALLERY=<your-subdomain2> # e.g. "avatar-gallery.${ZONE_NAME}"
+
+# following variable is the S3 bucket which is having all models pre-synced to be used during startup
+export MODEL_BUCKET_NAME=<comfyui-models-youruniqueid>

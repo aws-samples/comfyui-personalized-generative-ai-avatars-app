@@ -1,0 +1,33 @@
+# MANDATORY models
+https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/inswapper_128.onnx models/insightface/inswapper_128.onnx
+https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth models/facerestore_models/codeformer.pth
+https://civitai.com/api/download/models/354657 models/checkpoints/dreamshaper-XL.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors models/clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K-sd15.safetensors
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl.bin models/ipadapter/ip-adapter-faceid-plusv2_sdxl.bin
+
+
+
+# OPTIONAL
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors models/clip_vision/model.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors models/clip_vision/model_sdxl.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter_sd15.safetensors models/ipadapter/ip-adapter_sd15.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter_sd15_light_v11.bin models/ipadapter/ip-adapter_sd15_light_v11.bin
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter-plus_sd15.safetensors models/ipadapter/ip-adapter-plus_sd15.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter-plus-face_sd15.safetensors models/ipadapter/ip-adapter-plus-face_sd15.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter-full-face_sd15.safetensors models/ipadapter/ip-adapter-full-face_sd15.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter_sd15_vit-G.safetensors models/ipadapter/ip-adapter_sd15_vit-G.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl_vit-h.safetensors models/ipadapter/ip-adapter_sdxl_vit-h.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors models/ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors models/ipadapter/ip-adapter-plus-face_sdxl_vit-h.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl.safetensors models/ipadapter/ip-adapter_sdxl.safetensors
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15.bin models/ipadapter/ip-adapter-faceid_sd15.bin
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sd15.bin models/ipadapter/ip-adapter-faceid-plusv2_sd15.bin
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-portrait-v11_sd15.bin models/ipadapter/ip-adapter-faceid-portrait-v11_sd15.bin
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sdxl.bin models/ipadapter/ip-adapter-faceid_sdxl.bin
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-portrait_sdxl.bin models/ipadapter/ip-adapter-faceid-portrait_sdxl.bin
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-portrait_sdxl_unnorm.bin models/ipadapter/ip-adapter-faceid-portrait_sdxl_unnorm.bin
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15_lora.safetensors models/loras/ip-adapter-faceid_sd15_lora.safetensors
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sd15_lora.safetensors models/loras/ip-adapter-faceid-plusv2_sd15_lora.safetensors
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sdxl_lora.safetensors models/loras/ip-adapter-faceid_sdxl_lora.safetensors
+https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl_lora.safetensors models/loras/ip-adapter-faceid-plusv2_sdxl_lora.safetensors
+https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors models/clip_vision/CLIP-ViT-bigG-14-laion2B-39B-b160k-sdxl.safetensors

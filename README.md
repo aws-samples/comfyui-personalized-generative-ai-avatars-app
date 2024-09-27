@@ -45,28 +45,31 @@ This repository contains the infrastructure code and configuration to deploy a m
 
 ## Services
 
-This stack leverages several AWS services to create a scalable and secure architecture:
+This stack leverages several AWS services to create a scalable and secure architecture. There is also an EBS version of a similar stack. If you're curious about this, feel free to check out the branch ebs-comfyui-single-instance.
 
 - **[Amazon VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html)**: Provides isolated network infrastructure
 - **[Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html)**: Manages containerized applications
 - **[Amazon EC2 Auto Scaling](https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html)**: Dynamically adjusts compute capacity
 - **[Amazon ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html)**: Stores Docker images
 - **[Elastic Load Balancing](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html)**: Distributes incoming application traffic
+- **[Amazon EFS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html)**: Elastic File System for storing ComfyUI Code, custom_nodes and models
 - **[Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html)**: Stores logs and serves as storage for Avatar App and Gallery
 - **[Amazon CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html)**: Monitors and logs application metrics
 - **[Amazon Cognito](https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html)**: Manages user authentication
 - **[AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)**: Provides utility functions for managing the stack
 - **[Amazon CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html)**: Delivers content with low latency
 - **[Amazon Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html)**: Manages DNS routing
-- **[AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html)**: Provisions and manages SSL/TLS certificates
+- **[AWS Certificate Manager](https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html)**: Provisions and manages SSL/TLS certificates  
 
 ## Deployment Types
 
-This stack supports three deployment configurations:
+This cdk stack supports three deployment configurations:
 
 1. **`ComfyUI`**: Deploys only the ComfyUI service
 2. **`ComfyUIWithAvatarApp`**: Deploys ComfyUI and the Avatar App
 3. **`FullStack`**: Deploys ComfyUI, Avatar App, and Avatar Gallery (default)
+
+
 
 ## Prerequisites
 
@@ -88,6 +91,7 @@ Before deploying this stack, ensure you have:
    - `RECORD_NAME_COMFYUI`: Subdomain for ComfyUI (e.g. `comfyui.example.com`)
    - `RECORD_NAME_AVATAR_APP`: Subdomain for Avatar App (e.g. `avatar-app.example.com`, required for ComfyUIWithAvatarApp and FullStack deployments)
    - `RECORD_NAME_AVATAR_GALLERY`: Subdomain for Avatar Gallery (e.g. `avatar-gallery.example.com`, required for FullStack deployment)
+   - `MODEL_BUCKET_NAME`: Bucket containing the required models, clipvision, ipadapters. Mandatory for Avatar App. See presync all chapter.
 8. A valid SSL/TLS certificate for your domain in AWS Certificate Manager
 9. A Route 53 hosted zone for your domain
 10. Service Quotas increased for VPC: Inbound or outbound rules per security group to eg. `150`. Because the CloudFront Prefix list consumes approx. 60 rules (see: [Limit access to your origins using the AWS-managed prefix list for Amazon CloudFront](https://aws.amazon.com/de/blogs/networking-and-content-delivery/limit-access-to-your-origins-using-the-aws-managed-prefix-list-for-amazon-cloudfront/))
@@ -111,9 +115,9 @@ Ensure all these prerequisites are met before proceeding with the deployment.
 
 3. Edit all the required environment variables inside `set_variables.sh` and source the script to set them:
    ```bash
+   #EDIT THE VARIABLES FIRST!
    source set_variables.sh
    ```
-
 
 ### Building and Pushing Docker Images
 
@@ -149,6 +153,23 @@ Ensure all these prerequisites are met before proceeding with the deployment.
    ```
    For users not on Apple Silicon, you can omit the `--platform linux/amd64` flag.
 
+### PRE-SYNC all required models that the Avatar App and Gallery can work.
+This is mandatory for the Avatar App. If you deploy only ComfyUI, then this step is optional.  
+IMPORTANT: You need approx. 15GB free disk space locally. If you want to download the models and delete them after the upload, then uncomment this in the `presync.py` file:
+   ```python
+    # shutil.rmtree(LOCAL_MODEL_DIR)
+   ```
+
+Per default the script downloads only the mandatory models from [model_list.txt](/model_list.txt). There is also a [model_list_extended.txt](/model_list_extended.txt) file which can be referenced. That list inlcudes additional models that ipadapter and clipvisions work properly. I would recommend the extended list for the ones which want also To work with ComfyUI directly (>20GB space needed).
+
+1. Execute presync script:
+   ```bash
+   python3 -m presync
+   ```  
+2. Set environemnt Variable for bucket
+   ```bash
+   export MODEL_BUCKET_NAME=<your-model-bucket-name-from-presync-ouptut>
+   ```
 
 
 ### Deploying the Stack
@@ -226,25 +247,35 @@ Application Features:
    - Only access the images that are accepted from the admin
 - Displayed login credentials and qr-code on the left sidebar for fast access from mobile device (must be updated according to your setup)
 
-## Uploading Models
+## Uploading additional Models
 
-The provided installation uploads the required models and modules for the Avatar App to the persistent EBS volume used by the EC2 instance backing the ComfyUI container. The script [upload_models.sh](comfyui_config/upload_models.sh)  contains a helper snippet to upload a wider selection of additional models, loras and ComfyUI custom models. An example of how to access to the EC2 instance, the ComfyUI container and to download of the components is shown below:
+If you have run the `presync.py` then you have already the required models uploaded. The script [upload_models.sh](comfyui_config/upload_models.sh) contains a helper snippet to upload a wider selection of additional models, loras and ComfyUI custom models. An example of how to access to the EC2 instance, the ComfyUI container and to download of the components is shown below:
 
 1. Connect to the EC2 instance via SSM:
    ```bash
+   # You can also get the instance-id from the console and run:
+   # aws ssm start-session --target "i-youridhere"
    aws ssm start-session --target "$(aws ec2 describe-instances --filters "Name=tag:Name,Values=ComfyUIStack/ASG" "Name=instance-state-name,Values=running" --query 'Reservations[*].Instances[*].[InstanceId]' --output text)" --region $AWS_DEFAULT_REGION
    ```
 
-2. Access the ComfyUI container:
+2. cd to ComfyUI path
    ```bash
-   container_id=$(sudo docker container ls --format '{{.ID}} {{.Image}}' | grep 'comfyui:latest$' | awk '{print $1}')
-   sudo docker exec -it $container_id /bin/bash
+   sudo su
+   cd /home/user/opt/ComfyUI
    ```
 
 3. Download and install your desired models. For example:
    ```bash
+   # if wget not available 
+   # yum install wget
    wget -c https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt -O ./models/checkpoints/v1-5-pruned-emaonly.ckpt
    ```
+
+3. Change owner of all files and directories, that ComfyUI can access and use them
+   ```bash
+   chown -R 1010:1010 /home/user/opt/ComfyUI/models
+   ```
+
 
 ## Cost Considerations
 
@@ -260,7 +291,7 @@ To avoid ongoing charges, delete the resources when no longer needed:
 
 1. Manually delete the Auto Scaling Group from the AWS Console.
 2. Run `cdk destroy` to remove the remaining resources.
-3. Manually delete the EBS volume and Cognito User Pool from the AWS Console.
+3. Manually delete the MODEL_BUCKET and Cognito User Pool from the AWS Console.
 4. Delete the ECR repositories if no longer needed.
 
 ## Security
@@ -270,7 +301,7 @@ This project implements several security best practices:
 - VPC with public and private subnets
 - Security groups to control traffic
 - SSL/TLS encryption for all public endpoints
-- Cognito authentication for access control
+- Cognito authentication for access control on ALB and within Streamlit Apps
 - Several fine-grained IAM policies
 - cdk-nag for IaC best practices
 

@@ -1,22 +1,29 @@
 comfyui:
     base_path: /home/user/opt/ComfyUI/
-    checkpoints: models/checkpoints/
-    clip: models/clip/
-    clip_vision: models/clip_vision/
-    configs: models/configs/
-    controlnet: models/controlnet/
-    diffusers: models/diffusers/
-    embeddings: models/embeddings/
-    gligen: models/gligen/
-    hypernetworks: models/hypernetworks/
-    loras: models/loras/
-    mmdets: models/mmdets/
-    onnx: models/onnx/
-    sams: models/sams/
-    style_models: models/style_models/
-    ultralytics: models/ultralytics/
-    unet: models/unet/
-    upscale_models: models/upscale_models/
-    vae: models/vae/
-    vae_approx: models/vae_approx/
+    checkpoints: /home/user/opt/ComfyUI/models/checkpoints/
+    clip: /home/user/opt/ComfyUI/models/clip/
+    clip_vision: /home/user/opt/ComfyUI/models/clip_vision/
+    configs: /home/user/opt/ComfyUI/models/configs/
+    controlnet: /home/user/opt/ComfyUI/models/controlnet/
+    diffusers: /home/user/opt/ComfyUI/models/diffusers/
+    embeddings: /home/user/opt/ComfyUI/models/embeddings/
+    gligen: /home/user/opt/ComfyUI/models/gligen/
+    hypernetworks: /home/user/opt/ComfyUI/models/hypernetworks/
+    loras: /home/user/opt/ComfyUI/models/loras/
+    mmdets: /home/user/opt/ComfyUI/models/mmdets/
+    onnx: /home/user/opt/ComfyUI/models/onnx/
+    sams: /home/user/opt/ComfyUI/models/sams/
+    style_models: /home/user/opt/ComfyUI/models/style_/home/user/opt/ComfyUI/models/
+    ultralytics: /home/user/opt/ComfyUI/models/ultralytics/
+    unet: /home/user/opt/ComfyUI/models/unet/
+    upscale_models: /home/user/opt/ComfyUI/models/upscale_/home/user/opt/ComfyUI/models/
+    vae: /home/user/opt/ComfyUI/models/vae/
+    vae_approx: /home/user/opt/ComfyUI/models/vae_approx/
     custom_nodes: custom_nodes/
+    clip_interrogator: /home/user/opt/ComfyUI/models/clip_interrogator/
+    diffusion_models: |
+        /home/user/opt/ComfyUI/models/diffusion_models
+        /home/user/opt/ComfyUI/models/unet
+    LLM: /home/user/opt/ComfyUI/models/LLM/
+    llm_gguf: /home/user/opt/ComfyUI/models/llm_gguf/
+    photomaker: /home/user/opt/ComfyUI/models/photomaker/
