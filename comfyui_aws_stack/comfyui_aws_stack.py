@@ -167,7 +167,6 @@ class ComfyUIStack(Stack):
             self,
             "AsgSecurityGroup",
             security_group_name="ComfyUIAsgSecurityGroup",
-            security_group_name="ComfyUIAsgSecurityGroup",
             vpc=vpc,
             description="Security Group for ASG",
             allow_all_outbound=True,
@@ -1057,7 +1056,6 @@ class ComfyUIStack(Stack):
                 self,
                 "AvatarALBSecurityGroup",
                 security_group_name="AvatarALBSecurityGroup",
-                security_group_name="AvatarALBSecurityGroup",
                 vpc=vpc,
                 description="Security group for Avatar ALB"
             )
@@ -1412,7 +1410,6 @@ class ComfyUIStack(Stack):
                 self,
                 "AvatarAppFargateService",
                 service_name="AvatarAppService",
-                service_name="AvatarAppService",
                 cluster=cluster,
                 task_definition=avatar_app_task_definition,
                 desired_count=1,
@@ -1523,7 +1520,6 @@ class ComfyUIStack(Stack):
                 avatar_gallery_service = ecs.FargateService(
                     self,
                     "AvatarGalleryFargateService",
-                    service_name="AvatarGalleryService",
                     service_name="AvatarGalleryService",
                     cluster=cluster,
                     task_definition=avatar_gallery_task_definition,
