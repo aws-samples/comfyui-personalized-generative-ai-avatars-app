@@ -9,7 +9,7 @@ __pycache__
 tmp
 
 # Folder view configuration files
-.DS_Store
+*.DS_Store
 Desktop.ini
 
 # Thumbnail cache files

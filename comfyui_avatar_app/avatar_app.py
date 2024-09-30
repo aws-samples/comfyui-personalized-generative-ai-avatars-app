@@ -2,7 +2,6 @@ import json
 import boto3
 import streamlit as st
 from PIL import Image, ImageOps
-import websocket
 import uuid
 import random
 import os
@@ -78,6 +77,9 @@ for key, value in session_state_defaults.items():
 if 'comfyui_session' not in st.session_state:
     st.session_state.comfyui_session = str(uuid.uuid4())
 
+if 'avatar_creation_in_progress' not in st.session_state:
+    st.session_state['avatar_creation_in_progress'] = False
+
 comfyui_session = st.session_state.comfyui_session
 client_id = str(uuid.uuid4())
 
@@ -110,41 +112,33 @@ def make_comfyui_request(endpoint, method='GET', data=None, headers=None, files=
     try:
         if method == 'GET':
             response = requests.get(url, headers=headers, params=params, cookies=cookies)
-            logger.info(f"make_comfyui_request GET response: {response}")
+            logger.info(f"make_comfyui_request GET response status: {response.status_code}")
         elif method == 'POST':
             response = requests.post(url, data=data, headers=headers, files=files, params=params, cookies=cookies)
-            logger.info(f"make_comfyui_request POST response: {response}")
+            logger.info(f"make_comfyui_request POST response status: {response.status_code}")
         else:
             raise ValueError(f"Unsupported method {method}")
         response.raise_for_status()
         if response.headers.get('Content-Type', '').startswith('application/json'):
+            logger.info(f"Returning JSON response for {endpoint}")
             return response.json()
         else:
+            logger.info(f"Returning content response for {endpoint}")
             return response.content
     except requests.exceptions.HTTPError as e:
-        st.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
+        logger.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
         return None
     except requests.exceptions.RequestException as e:
-        st.error(f"Error making request to ComfyUI: {e}")
+        logger.error(f"Error making request to ComfyUI: {e}")
         return None
-
-
-def create_ws_connection():
-    
-    comfyui_session = st.session_state.get('comfyui_session', '')
-    # Build cookie string with only 'comfyui_session'
-    cookie_str = f'COMFY-SESSION={comfyui_session}'
-    ws = websocket.WebSocket()
-    logger.info(f"Creating WebSocket connection with comfyui_session: {comfyui_session}")
-    ws.connect(f"ws://{COMFYUI_ENDPOINT}/ws?clientId={client_id}", cookie=cookie_str)
-    return ws
-
 
 def is_comfyui_running():
     try:
         response = make_comfyui_request('system_stats')
         return response is not None
-    except Exception:
+    except requests.exceptions.RequestException as e:
+        # logger.error(f"Error checking ComfyUI status: {e}")
+        st.warning("Backend (ComfyUI) is not available. Please check your connection or ComfyUI configuration.")
         return False
 
 def clear_session_state():
@@ -238,7 +232,7 @@ def share_avatar(image_data):
         s3_key = prefix + st.session_state["glb_photo_name"]
         s3.meta.client.upload_file(output_image_name, bucket, s3_key)
 
-def parse_workflow(ws, prompt, negative_prompt, seed, input_image_name, filename, comfyui_session):
+def parse_workflow(prompt, negative_prompt, seed, input_image_name, filename, comfyui_session):
     image.convert('RGB').save(input_image_name, "JPEG")
     with open(workflowfile, 'r', encoding="utf-8") as workflow_api_txt2gif_file:
         # First upload Image to ComfyUI
@@ -249,41 +243,34 @@ def parse_workflow(ws, prompt, negative_prompt, seed, input_image_name, filename
         prompt_data["47"]["inputs"]["text"] = negative_prompt
         prompt_data["45"]["inputs"]["noise_seed"] = seed
         prompt_data["53"]["inputs"]["image"] = filename
-        return get_images(ws, prompt_data, input_image_name, comfyui_session)
+        return get_images(prompt_data, input_image_name, comfyui_session)
 
 
-def queue_prompt(prompt):
+def queue_prompt(prompt_data):
     comfyui_session = st.session_state.comfyui_session
-    data = {"prompt": prompt, "client_id": client_id}
-    headers = {'Content-Type': 'application/json'}
+    data = {"prompt": prompt_data, "client_id": client_id}
     cookies = {'COMFY-SESSION': comfyui_session}
     logger.info(f"Queueing prompt with data: {data}")
-    response = requests.post(f"http://{COMFYUI_ENDPOINT}/prompt", data=json.dumps(data).encode("utf-8"), cookies=cookies)
-    response.raise_for_status()
-    return response.json()
-
+    response = make_comfyui_request('prompt', 
+                                    method='POST', 
+                                    data=json.dumps(data).encode("utf-8"), 
+                                    cookies=cookies)
+    return response 
 
 def preprocess_image(uploaded_file, max_size=1024):
     try:
-        # Read file content
         file_content = uploaded_file.read()
 
-        # Open the image
         with Image.open(io.BytesIO(file_content)) as img:
-            # Convert to RGB (removes alpha channel if present)
             img = img.convert('RGB')
-
-            # Get the larger dimension
             max_dim = max(img.width, img.height)
 
             # Only resize if the image is larger than max_size
             if max_dim > max_size:
-                # Calculate the ratio
                 ratio = max_size / max_dim
                 new_size = (int(img.width * ratio), int(img.height * ratio))
                 img = img.resize(new_size, Image.LANCZOS)
 
-            # Save to bytes as PNG
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format='PNG')
             return img_byte_arr.getvalue()
@@ -293,40 +280,43 @@ def preprocess_image(uploaded_file, max_size=1024):
 
 def get_history(prompt_id):
     cookies = {'COMFY-SESSION': comfyui_session}
-
     logger.info(f"get_history prompt_id: {prompt_id}")
     logger.info(f"get_history comfyui_session: {comfyui_session}")
-    response = requests.get(f"http://{COMFYUI_ENDPOINT}/history/{prompt_id}", cookies=cookies)
-    logger.info(f"get_history response: {response.json()}")
-    response.raise_for_status()
-    return response.json()
+    response = make_comfyui_request(f'history/{prompt_id}', 
+                                    method='GET', 
+                                    cookies=cookies)
+    logger.info(f"get_history response: {response}")
+    return response 
 
 def get_image(filename, subfolder, folder_type, comfyui_session):
     params = {"filename": filename, "subfolder": subfolder, "type": folder_type}
     cookies = {'COMFY-SESSION': comfyui_session}
-    response = requests.get(f"http://{COMFYUI_ENDPOINT}/view", params=params, cookies=cookies)
-    response.raise_for_status()
-    return response.content
+    response = make_comfyui_request('view', 
+                                    method='GET', 
+                                    params=params, 
+                                    cookies=cookies)
+    return response
 
-def get_images(ws, prompt, input_image_name, comfyui_session):
-    response = queue_prompt(prompt)
-    logger.info(f"get_images response: {response}")
+def get_images(prompt_data, input_image_name, comfyui_session):
+    response = queue_prompt(prompt_data)
     if response is None:
+        logger.error("Failed to queue prompt.")
         st.error("Failed to queue prompt.")
         return {}
+    
     prompt_id = response.get('prompt_id')
-    logger.info(f"get_images prompt_id: {prompt_id}")
-    if not prompt_id:
-        st.error("No prompt_id received from server.")
-        return {}
-    
-    # msg = st.toast(f"Processing prompt: {prompt_id}")
-    
-    output_images = {}
-    last_queue_remaining = None
-    last_message_time = time.time()
-    timeout = 8
 
+    output_images = {}
+    overall_timeout = 20  # Total timeout in seconds
+    initial_wait = 2  # Initial wait before first check
+    check_interval = 1.5  # Interval between checks
+    extended_interval = 3  # Extended interval for later checks
+    switch_to_extended_at = 7.5  # Time to switch to extended interval
+
+    start_time = time.time()
+
+    msg = st.toast('Avatar creation triggered...')
+    
     def attempt_fetch_images():
         nonlocal output_images
         try:
@@ -336,114 +326,55 @@ def get_images(ws, prompt, input_image_name, comfyui_session):
                     if 'images' in node_output:
                         images_output = []
                         for image_info in node_output['images']:
-                            image_data = get_image(image_info['filename'], image_info['subfolder'], image_info['type'], comfyui_session)
+                            image_data = get_image(
+                                image_info['filename'],
+                                image_info['subfolder'],
+                                image_info['type'],
+                                comfyui_session
+                            )
                             images_output.append(image_data)
                         output_images[node_id] = images_output
             return bool(output_images)
         except Exception as e:
-            st.error(f"Failed to fetch images: {e}")
+            logger.error(f"Failed to fetch images: {e}")
             return False
 
-    msg = st.toast('Avatar creation triggered...')
-    time.sleep(2)
-    overall_timeout = 30
+    time.sleep(initial_wait)
+    attempt = 0
 
+    # Polling loop
     while True:
-        if time.time() - last_message_time > overall_timeout:
-            logger.info("Overall timeout reached. Closing connection.")
+        elapsed_time = time.time() - start_time
+
+        if elapsed_time > overall_timeout:
+            st.error("Timeout reached while waiting for images. Please try again")
             break
+
+        if attempt_fetch_images():
+            msg.toast('Images fetched successfully.')
+            break
+
+        if elapsed_time < switch_to_extended_at:
+            interval = check_interval
+        else:
+            interval = extended_interval
+
+        if attempt == 5:
+            msg.toast('only a few seconds more...')
         
-        try:
-            out = ws.recv()
-            
-            if isinstance(out, str):
-                message = json.loads(out)
-                logger.info(f"ws out message: {message}")
-                
-                if message['type'] == 'executed':
-                    data = message['data']
-                    if data['prompt_id'] == prompt_id:
-                        node_id = data['node']
-                        # msg.toast(f"Node execution completed: {node_id}")
-                        if 'output' in data:
-                            if 'images' in data['output']:
-                                images_output = []
-                                for image_info in data['output']['images']:
-                                    image_data = get_image(image_info['filename'], image_info['subfolder'], image_info['type'], comfyui_session)
-                                    images_output.append(image_data)
-                                output_images[node_id] = images_output
-                                # msg.toast(f"Images processed for node {node_id}", icon="✅")
-                                break  # Exit the loop as we've got our images
-                
-                elif message['type'] == 'execution_cached':
-                    if message['data']['prompt_id'] == prompt_id:
-                        logger.info(f"Execution cached: {message['data']}")
-                
-                elif message['type'] == 'executing':
-                    data = message['data']
-                    if data['prompt_id'] == prompt_id:
-                        if data['node'] is None:
-                            logger.info("Execution started.")
-                        else:
-                            logger.info(f"Executing node: {data['node']}")
-                
-                elif message['type'] == 'progress':
-                    data = message['data']
-                    if data['prompt_id'] == prompt_id:
-                        logger.info(f"Progress: {data['value']}/{data['max']} on node {data['node']}")
-                
-                elif message['type'] == 'status':
-                    status_data = message['data']['status']
-                    if 'exec_info' in status_data:
-                        queue_remaining = status_data['exec_info'].get('queue_remaining', 0)
-                        logger.info(f"Queue remaining: {queue_remaining}")
-                        if queue_remaining == 0:
-                            logger.info("Queue processing complete. Checking for images.")
-                            if attempt_fetch_images():
-                                logger.info("Images fetched successfully after queue completion.", icon="✅")
-                                break
-                        last_queue_remaining = queue_remaining
-            else:
-                continue
+        attempt += 1
+        time.sleep(interval)
 
-        except websocket.WebSocketTimeoutException:
-            # Check if we've been waiting too long without receiving any message
-            msg.toast("only a couple seconds more...")
-            if time.time() - last_message_time > timeout:
-                if attempt_fetch_images():
-                    logger.info("Images fetched successfully after timeout.", icon="✅")
-                    break
-                else:
-                    logger.info("No images found after timeout. Continuing to wait.", icon="⏳")
-
-        except websocket.WebSocketConnectionClosedException as e:
-            #st.warning(f"WebSocket connection closed: {e}. Attempting to fetch images.")
-            if attempt_fetch_images():
-                msg.toast("only a couple seconds more...", icon="✅")
-            else:
-                logger.info("Failed to fetch images after connection closed.")
-            break
-
-        except Exception as e:
-            logger.info(f"Error while receiving from WebSocket: {e}")
-            break
-
-    ws.close()
-
-    # If still no images, try one last time
+    # Final attempt to fetch images if not already fetched
     if not output_images:
-        msg.toast("only a couple seconds more...", icon="🔄")
         attempt_fetch_images()
 
     if not output_images:
-        st.error("Failed to fetch the avatar. Please try again")
+        st.session_state['avatar_creation_in_progress'] = False
+        st.error("Failed to fetch the avatar. Please try again.")
 
-    msg.toast("Images fetched successfully.", icon="✅")
-
-    # Do not persist input image
     os.remove(input_image_name)
     return output_images
-
 
 def describe_picture():
     if st.session_state.get("img_file_buffer") is not None:
@@ -688,24 +619,45 @@ if st.session_state['authenticated']:
 
                     st.session_state["avatar_created"] = False
 
+                    create_avatar_button = st.button(
+                        'Create avatar',
+                        key="create_avatar",
+                        on_click=created_avatar,
+                        use_container_width=True,
+                        disabled=st.session_state['avatar_creation_in_progress']
+                    )
                     # When creating the avatar:
-                    if st.button('Create avatar', key="create_avatar", on_click=created_avatar, use_container_width=True):
-                        ws = create_ws_connection()
-                        if ws:
-                            images = parse_workflow(ws, prompt, negative_prompt, seed, input_image_name, filename, comfyui_session)
-                        else:
-                            st.error("Failed to establish WebSocket connection. Please try again.")
-
-                        st.session_state["avatar_final_image"] = ""
-                        for node_id in images:
-                            for image_output in images[node_id]:
-                                image_data = Image.open(io.BytesIO(image_output))
-                                st.session_state["avatar_final_image"] = image_data
-                                if image_moderation:
-                                    rekog_img = RekognitionImage(st.session_state["avatar_final_image"],
-                                                                st.session_state["glb_photo_name"], client)
-                                    st.session_state["rekog_img_labels"] = rekog_img.detect_moderation_labels()
-                                    print("Moderation labels detected: " + str(st.session_state["rekog_img_labels"]))
+                    if create_avatar_button:
+                        st.session_state['avatar_creation_in_progress'] = True 
+                        try:
+                            images = parse_workflow(
+                                prompt,
+                                negative_prompt,
+                                seed,
+                                input_image_name,
+                                filename,
+                                comfyui_session
+                            )
+                        
+                            # Process images...
+                            st.session_state["avatar_final_image"] = ""
+                            for node_id in images:
+                                for image_output in images[node_id]:
+                                    try:
+                                        image_data = Image.open(io.BytesIO(image_output))
+                                        st.session_state["avatar_final_image"] = image_data
+                                        if image_moderation:
+                                            rekog_img = RekognitionImage(
+                                                st.session_state["avatar_final_image"],
+                                                st.session_state["glb_photo_name"],
+                                                client
+                                            )
+                                            st.session_state["rekog_img_labels"] = rekog_img.detect_moderation_labels()
+                                            logger.info(f"Moderation labels detected: {st.session_state['rekog_img_labels']}")
+                                    except Exception as e:
+                                        logger.error(f"Error processing image: {e}")
+                        finally:
+                            st.session_state['avatar_creation_in_progress'] = False
 
                 with col3:
                     st.header("Generated Avatar")
