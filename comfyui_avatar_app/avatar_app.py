@@ -61,13 +61,17 @@ session_state_defaults = {
     "rekog_img_labels": [],
     "displayed_avatar": st.text(""),
     "response_body": st.text(""),
-    "avatar_created": False,
+    "avatar_shared": False, 
     "face_detected": None,
     "log_messages": [],
     "authenticated": False,
     "filename": None,
     "capture": True,
-    "file_uploader_key": 0
+    "file_uploader_key": 0,
+    # "create_avatar": False,
+    # "create_avatar_flag": False,
+    "avatar_creation_in_progress": False,
+    "avatar_final_image": None,
 }
 for key, value in session_state_defaults.items():
     if key not in st.session_state:
@@ -77,8 +81,8 @@ for key, value in session_state_defaults.items():
 if 'comfyui_session' not in st.session_state:
     st.session_state.comfyui_session = str(uuid.uuid4())
 
-if 'avatar_creation_in_progress' not in st.session_state:
-    st.session_state['avatar_creation_in_progress'] = False
+def start_avatar_creation():
+    st.session_state.avatar_creation_in_progress = True
 
 comfyui_session = st.session_state.comfyui_session
 client_id = str(uuid.uuid4())
@@ -150,7 +154,7 @@ def clear_session_state():
         "rekog_img_labels",
         "displayed_avatar",
         "response_body",
-        "avatar_created",
+        "avatar_shared",
         "face_detected"
     ]
     for key in keys_to_clear:
@@ -205,12 +209,6 @@ class RekognitionImage:
         )
         labels = [label['Name'] for label in response["ModerationLabels"]]
         return labels
-
-def created_avatar():
-    st.session_state["avatar_created"] = True
-    st.session_state["glb_photo_name"] = "avatar-" + str(uuid.uuid4())[-17:] + ".jpeg"
-    if st.session_state.get("displayed_avatar"):
-        st.session_state["displayed_avatar"].empty()
 
 def upload_image(input_path, name, comfyui_session, image_type="input", overwrite=False):
     with open(input_path, 'rb') as file:
@@ -617,47 +615,48 @@ if st.session_state['authenticated']:
                         unsafe_allow_html=True
                     )
 
-                    st.session_state["avatar_created"] = False
-
                     create_avatar_button = st.button(
                         'Create avatar',
                         key="create_avatar",
-                        on_click=created_avatar,
-                        use_container_width=True,
-                        disabled=st.session_state['avatar_creation_in_progress']
+                        on_click=start_avatar_creation,
+                        disabled=st.session_state.avatar_creation_in_progress,
+                        use_container_width=True
                     )
-                    # When creating the avatar:
-                    if create_avatar_button:
-                        st.session_state['avatar_creation_in_progress'] = True 
-                        try:
-                            images = parse_workflow(
-                                prompt,
-                                negative_prompt,
-                                seed,
-                                input_image_name,
-                                filename,
-                                comfyui_session
-                            )
-                        
-                            # Process images...
-                            st.session_state["avatar_final_image"] = ""
-                            for node_id in images:
-                                for image_output in images[node_id]:
-                                    try:
-                                        image_data = Image.open(io.BytesIO(image_output))
-                                        st.session_state["avatar_final_image"] = image_data
-                                        if image_moderation:
-                                            rekog_img = RekognitionImage(
-                                                st.session_state["avatar_final_image"],
-                                                st.session_state["glb_photo_name"],
-                                                client
-                                            )
-                                            st.session_state["rekog_img_labels"] = rekog_img.detect_moderation_labels()
-                                            logger.info(f"Moderation labels detected: {st.session_state['rekog_img_labels']}")
-                                    except Exception as e:
-                                        logger.error(f"Error processing image: {e}")
-                        finally:
-                            st.session_state['avatar_creation_in_progress'] = False
+
+
+                    if st.session_state.avatar_creation_in_progress:
+                        st.session_state["glb_photo_name"] = "avatar-" + str(uuid.uuid4())[-17:] + ".jpeg"
+                        st.session_state["avatar_final_image"] = None
+                        with st.spinner('Generating avatar...'):
+                            try:
+                                images = parse_workflow(
+                                    prompt,
+                                    negative_prompt,
+                                    seed,
+                                    input_image_name,
+                                    filename,
+                                    comfyui_session
+                                )
+                                # Process images...
+                                for node_id in images:
+                                    for image_output in images[node_id]:
+                                        try:
+                                            image_data = Image.open(io.BytesIO(image_output))
+                                            st.session_state["avatar_final_image"] = image_data
+                                            if image_moderation:
+                                                rekog_img = RekognitionImage(
+                                                    st.session_state["avatar_final_image"],
+                                                    st.session_state["glb_photo_name"],
+                                                    client
+                                                )
+                                                st.session_state["rekog_img_labels"] = rekog_img.detect_moderation_labels()
+                                                logger.info(f"Moderation labels detected: {st.session_state['rekog_img_labels']}")
+                                        except Exception as e:
+                                            logger.error(f"Error processing image: {e}")
+                            finally:
+                                # Reset the flag after processing
+                                st.session_state.avatar_creation_in_progress = False
+                                st.rerun()
 
                 with col3:
                     st.header("Generated Avatar")
@@ -672,11 +671,13 @@ if st.session_state['authenticated']:
 
                                 # Share Avatar
                                 if st.button('Share your avatar!', key="share_avatar", use_container_width=True,
-                                             disabled=st.session_state["avatar_created"]):
+                                            disabled=st.session_state["avatar_shared"]):
                                     share_avatar(st.session_state["avatar_final_image"])
                                     st.text("Image shared to Gallery!")
+                                    st.session_state["avatar_shared"] = True
                             else:
                                 st.warning("Image has been moderated and will not be shown")
+
 
         st.markdown(
             """<style>
