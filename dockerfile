@@ -65,7 +65,7 @@ RUN mkdir -p custom_nodes/ComfyUI_IPAdapter_plus && \
 
 RUN echo "### Install comfyui-reactor-node"
 RUN mkdir -p custom_nodes/comfyui-reactor-node && \
-    git clone https://github.com/Gourieff/comfyui-reactor-node custom_nodes/comfyui-reactor-node && \
+    git clone https://github.com/Gourieff/ComfyUI-ReActor custom_nodes/comfyui-reactor-node && \
     cd custom_nodes/comfyui-reactor-node && \
     python3 -m pip install -r requirements.txt
 
