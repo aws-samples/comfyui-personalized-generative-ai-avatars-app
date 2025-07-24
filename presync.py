@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "boto3>=1.34.110",
-#     "tqdm>=4.66.0",
-#     "requests>=2.32.3",
-# ]
-# ///
-
 import os
 import sys
 import hashlib
@@ -20,26 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Global Variables
 LOCAL_MODEL_DIR = "./models"
 DOWNLOAD_LIST_FILE = "model_list.txt"
-
-
-def get_unique_suffix():
-    session = boto3.Session()
-    sts_client = session.client("sts")
-    account_id = sts_client.get_caller_identity().get("Account")
-    region = session.region_name
-
-    print(f"account_id: {account_id}")
-    print(f"region: {region}")
-
-    if not account_id or not region:
-        print("Unable to get AWS account ID or region. Please configure AWS CLI or set AWS credentials.")
-        sys.exit(1)
-
-    unique_input = f"{account_id}-{region}"
-    unique_hash = hashlib.sha256(unique_input.encode("utf-8")).hexdigest()[:10]
-    suffix = unique_hash.lower()
-    return suffix, region
-
+model_bucket_name = os.environ.get("MODEL_BUCKET_NAME")
 
 def ensure_bucket_exists(s3_client, bucket_name, region):
     try:
@@ -61,7 +33,9 @@ def ensure_bucket_exists(s3_client, bucket_name, region):
             print(f"Bucket {bucket_name} exists but is in a different region.")
             sys.exit(1)
         elif error_code == 403:
-            print(f"Access denied to bucket {bucket_name}. It may exist in another account.")
+            print(
+                f"Access denied to bucket {bucket_name}. It may exist in another account."
+            )
             sys.exit(1)
         else:
             print(f"Unexpected error (HTTP {error_code}): {e}")
@@ -144,8 +118,19 @@ def sync_directory_to_s3(s3_client, local_dir, bucket_name, s3_prefix=""):
 
 
 def main():
-    suffix, region = get_unique_suffix()
-    s3_bucket_name = f"comfyui-models-{suffix}"
+    if not model_bucket_name:
+        print("Error: MODEL_BUCKET_NAME environment variable is not set.")
+        print(
+            "Please run set_variables.sh first to set up the required environment variables."
+        )
+        sys.exit(1)
+
+    s3_bucket_name = model_bucket_name
+    print(f"Using bucket name from environment variable: {s3_bucket_name}")
+
+    # Get region from boto3 session
+    session = boto3.Session()
+    region = session.region_name
 
     s3_client = boto3.client("s3", region_name=region)
     ensure_bucket_exists(s3_client, s3_bucket_name, region)

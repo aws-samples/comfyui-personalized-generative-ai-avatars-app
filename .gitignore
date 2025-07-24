@@ -41,6 +41,7 @@ node_modules
 
 #vscode 
 .vscode
+.kiro
 
 .bandit.yaml
 bandit-env/

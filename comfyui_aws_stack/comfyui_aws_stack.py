@@ -24,9 +24,10 @@ from aws_cdk import (
     aws_certificatemanager as acm,
     aws_route53 as route53,
     aws_route53_targets as route53_targets,
-    aws_secretsmanager as secretsmanager, SecretValue,
+    aws_secretsmanager as secretsmanager,
+    SecretValue,
     aws_cloudtrail as cloudtrail,
-    aws_efs as efs
+    aws_efs as efs,
 )
 from cdk_nag import NagSuppressions
 from constructs import Construct
@@ -67,14 +68,14 @@ Author: Pajtim Matoshi
 """
 
 # these environment variables needs to be set, that the stack is deployable.
-cloudfront_certificate_arn = os.environ.get('CLOUDFRONT_CERTIFICATE_ARN')
-alb_certificate_arn = os.environ.get('ALB_CERTIFICATE_ARN')
-cloudfront_prefix_list_id = os.environ.get('CLOUDFRONT_PREFIX_LIST_ID')
-hosted_zone_id = os.environ.get('HOSTED_ZONE_ID')
-zone_name = os.environ.get('ZONE_NAME')
-record_name_comfyui = os.environ.get('RECORD_NAME_COMFYUI')
-record_name_avatar_app = os.environ.get('RECORD_NAME_AVATAR_APP')
-record_name_avatar_gallery = os.environ.get('RECORD_NAME_AVATAR_GALLERY')
+cloudfront_certificate_arn = os.environ.get("CLOUDFRONT_CERTIFICATE_ARN")
+alb_certificate_arn = os.environ.get("ALB_CERTIFICATE_ARN")
+cloudfront_prefix_list_id = os.environ.get("CLOUDFRONT_PREFIX_LIST_ID")
+hosted_zone_id = os.environ.get("HOSTED_ZONE_ID")
+zone_name = os.environ.get("ZONE_NAME")
+record_name_comfyui = os.environ.get("RECORD_NAME_COMFYUI")
+record_name_avatar_app = os.environ.get("RECORD_NAME_AVATAR_APP")
+record_name_avatar_gallery = os.environ.get("RECORD_NAME_AVATAR_GALLERY")
 model_bucket_name = os.environ.get("MODEL_BUCKET_NAME")
 
 
@@ -85,46 +86,63 @@ class ComfyUIStack(Stack):
         deployment_type = self.node.try_get_context("DeploymentType") or "FullStack"
 
         if deployment_type not in ["ComfyUI", "ComfyUIWithAvatarApp", "FullStack"]:
-            raise ValueError(f"Invalid deployment type: {deployment_type}. "
-                             "Must be one of: ComfyUI, ComfyUIWithAvatarApp, FullStack")
+            raise ValueError(
+                f"Invalid deployment type: {deployment_type}. "
+                "Must be one of: ComfyUI, ComfyUIWithAvatarApp, FullStack"
+            )
 
         unique_input = f"{self.account}-{self.region}"
-        unique_hash = hashlib.sha256(unique_input.encode('utf-8')).hexdigest()[:10]
+        unique_hash = hashlib.sha256(unique_input.encode("utf-8")).hexdigest()[:10]
         suffix = unique_hash.lower()
 
         # Check for required environment variables
-        required_vars = ['CLOUDFRONT_CERTIFICATE_ARN', 'ALB_CERTIFICATE_ARN', 'CLOUDFRONT_PREFIX_LIST_ID',
-                         'HOSTED_ZONE_ID', 'ZONE_NAME', 'RECORD_NAME_COMFYUI']
+        required_vars = [
+            "CLOUDFRONT_CERTIFICATE_ARN",
+            "ALB_CERTIFICATE_ARN",
+            "CLOUDFRONT_PREFIX_LIST_ID",
+            "HOSTED_ZONE_ID",
+            "ZONE_NAME",
+            "RECORD_NAME_COMFYUI",
+        ]
 
-        if deployment_type in ['ComfyUIWithAvatarApp', 'FullStack']:
-            required_vars.append('RECORD_NAME_AVATAR_APP')
-            required_vars.append('MODEL_BUCKET_NAME')
-            # Reference the existing bucket
-            model_bucket = s3.Bucket.from_bucket_name(self, "ModelBucket", model_bucket_name)
+        if deployment_type in ["ComfyUIWithAvatarApp", "FullStack"]:
+            required_vars.append("RECORD_NAME_AVATAR_APP")
+            required_vars.append("MODEL_BUCKET_NAME")
 
-        if deployment_type == 'FullStack':
-            required_vars.append('RECORD_NAME_AVATAR_GALLERY')
+        if deployment_type == "FullStack":
+            required_vars.append("RECORD_NAME_AVATAR_GALLERY")
+
+        # Set up model bucket reference if needed
+        model_bucket = None
+        if model_bucket_name:
+            # Create reference to the model bucket without validation
+            # The bucket existence will be validated at runtime during EC2 startup
+            model_bucket = s3.Bucket.from_bucket_name(
+                self, "ModelBucket", model_bucket_name
+            )
 
         missing_vars = [var for var in required_vars if not os.environ.get(var)]
 
         if missing_vars:
             raise ValueError(
-                f"Missing required environment variables for deployment type '{deployment_type}': {', '.join(missing_vars)}")
+                f"Missing required environment variables for deployment type '{deployment_type}': {', '.join(missing_vars)}"
+            )
 
-        vpc = ec2.Vpc(self, "ComfyVPC",
-                      max_azs=2,
-                      subnet_configuration=[
-                          ec2.SubnetConfiguration(
-                              name="Public",
-                              subnet_type=ec2.SubnetType.PUBLIC,
-                              cidr_mask=24
-                          ),
-                          ec2.SubnetConfiguration(
-                              name="Private",
-                              subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
-                              cidr_mask=24
-                          )
-                      ])
+        vpc = ec2.Vpc(
+            self,
+            "ComfyVPC",
+            max_azs=2,
+            subnet_configuration=[
+                ec2.SubnetConfiguration(
+                    name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24
+                ),
+                ec2.SubnetConfiguration(
+                    name="Private",
+                    subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                    cidr_mask=24,
+                ),
+            ],
+        )
 
         # Enable VPC Flow Logs
         flow_log = ec2.FlowLog(
@@ -136,29 +154,25 @@ class ComfyUIStack(Stack):
 
         # geo restriction according FATF Blacklist recommendation.
         # Can be changed for your use case
-        geo_restriction = cloudfront.GeoRestriction.denylist(
-            'KP', 'IR', 'MM'
-        )
+        geo_restriction = cloudfront.GeoRestriction.denylist("KP", "IR", "MM")
 
         # Reference exiting Route53 hosted zone
         hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
             self,
             "Route53HostedZone",
             hosted_zone_id=hosted_zone_id,
-            zone_name=zone_name
+            zone_name=zone_name,
         )
 
         # Retrieve an existing certificate
         cloudfront_certificate = acm.Certificate.from_certificate_arn(
             self,
             "ExistingCloudfrontCertificate",
-            certificate_arn=cloudfront_certificate_arn
+            certificate_arn=cloudfront_certificate_arn,
         )
 
         alb_certificate = acm.Certificate.from_certificate_arn(
-            self,
-            "ExistingAlbCertificate",
-            certificate_arn=alb_certificate_arn
+            self, "ExistingAlbCertificate", certificate_arn=alb_certificate_arn
         )
 
         comfyui_alb_security_group = ec2.SecurityGroup(
@@ -166,7 +180,7 @@ class ComfyUIStack(Stack):
             "ComfyUIALBSecurityGroup",
             security_group_name="ComfyUIALBSecurityGroup",
             vpc=vpc,
-            description="Security group for ComfyUI ALB"
+            description="Security group for ComfyUI ALB",
         )
 
         # Create Auto Scaling Group Security Group
@@ -191,9 +205,86 @@ class ComfyUIStack(Stack):
             "EC2Role",
             assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedEC2InstanceDefaultPolicy")
-            ]
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "AmazonSSMManagedEC2InstanceDefaultPolicy"
+                )
+            ],
         )
+
+        ec2_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "AmazonElasticFileSystemClientFullAccess"
+            )
+        )
+
+        ec2_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "ecs:CreateCluster",
+                    "ecs:DeregisterContainerInstance",
+                    "ecs:DiscoverPollEndpoint",
+                    "ecs:Poll",
+                    "ecs:RegisterContainerInstance",
+                    "ecs:StartTelemetrySession",
+                    "ecs:UpdateContainerInstancesState",
+                    "ecs:Submit*",
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeTags",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                ],
+                resources=["*"],
+            )
+        )
+
+
+
+        ec2_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "autoscaling:CompleteLifecycleAction",
+                    "autoscaling:RecordLifecycleActionHeartbeat",
+                    "autoscaling:DescribeAutoScalingInstances",
+                    "autoscaling:DescribeLifecycleHooks",
+                ],
+                resources=[
+                    f"arn:aws:autoscaling:{self.region}:{self.account}:autoScalingGroup:*"
+                ],
+            )
+        )
+
+        ec2_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "ec2:AttachVolume",
+                    "ec2:CreateVolume",
+                    "ec2:CreateSnapshot",
+                    "ec2:CreateTags",
+                    "ec2:DeleteVolume",
+                    "ec2:DeleteSnapshot",
+                    "ec2:DescribeAvailabilityZones",
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeVolumes",
+                    "ec2:DescribeVolumeAttribute",
+                    "ec2:DescribeVolumeStatus",
+                    "ec2:DescribeSnapshots",
+                    "ec2:CopySnapshot",
+                    "ec2:DescribeSnapshotAttribute",
+                    "ec2:DetachVolume",
+                    "ec2:ModifySnapshotAttribute",
+                    "ec2:ModifyVolumeAttribute",
+                    "ec2:DescribeTags",
+                    "ec2:EnableVolumeIO",
+                ],
+                resources=["*"],
+            )
+        )
+
 
         efs_security_group = ec2.SecurityGroup(
             self,
@@ -212,7 +303,7 @@ class ComfyUIStack(Stack):
             performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
             throughput_mode=efs.ThroughputMode.ELASTIC,
             removal_policy=RemovalPolicy.DESTROY,
-            security_group=efs_security_group
+            security_group=efs_security_group,
         )
 
         efs_security_group.add_ingress_rule(
@@ -223,7 +314,8 @@ class ComfyUIStack(Stack):
 
         cluster_name = "ComfyUICluster"
         user_data_script = ec2.UserData.for_linux()
-        user_data_script.add_commands(f"""
+        user_data_script.add_commands(
+            f"""
         #!/bin/bash 
         set -e  # Exit immediately if a command exits with a non-zero status.
 
@@ -257,17 +349,22 @@ class ComfyUIStack(Stack):
 
         echo "Mounting EFS with ID: $EFS_ID"
         mkdir -p $EFS_MOUNT 
-        mount -t efs -o iam,tls $EFS_ID:/ $EFS_MOUNT 
+        mount -t efs -o tls,iam $EFS_ID:/ $EFS_MOUNT 
         echo "# EFS mount" >> /etc/fstab 
-        echo "$EFS_ID:/ $EFS_MOUNT efs defaults,_netdev 0 0" >> /etc/fstab 
+        echo "$EFS_ID:/ $EFS_MOUNT efs defaults,_netdev,tls,iam 0 0" >> /etc/fstab 
 
         # Create necessary directories 
         mkdir -p $NVME_MOUNT/comfyui/models
 
         # Check if the model bucket name is provided
-        if [ -n "{model_bucket.bucket_name}" ]; then
-            echo "Syncing models from S3 bucket: {model_bucket.bucket_name}"
-            aws s3 sync s3://{model_bucket.bucket_name}/models $EFS_MOUNT/models --no-progress
+        if [ -n "{model_bucket.bucket_name if model_bucket else ''}" ]; then
+            echo "Checking if S3 bucket exists: {model_bucket.bucket_name if model_bucket else ''}"
+            if aws s3api head-bucket --bucket "{model_bucket.bucket_name if model_bucket else ''}" 2>/dev/null; then
+                echo "Syncing models from S3 bucket: {model_bucket.bucket_name if model_bucket else ''}"
+                aws s3 sync s3://{model_bucket.bucket_name if model_bucket else ''}/models $EFS_MOUNT/models --no-progress
+            else
+                echo "Bucket does not exist: {model_bucket.bucket_name if model_bucket else ''}"
+            fi
         else
             echo "No model bucket specified, skipping S3 sync."
         fi
@@ -290,14 +387,16 @@ class ComfyUIStack(Stack):
 
         echo "User data script execution completed"
         """
-                                      )
+        )
 
         comfyui_workflow_asg = autoscaling.AutoScalingGroup(
             self,
             "ComfyUIWorkflowASG",
             auto_scaling_group_name="ComfyUIWorkflowASG",
             vpc=vpc,
-            instance_type=ec2.InstanceType("g5.4xlarge"),  # TODO change to xlarge or 2xlarge
+            instance_type=ec2.InstanceType(
+                "g5.4xlarge"
+            ),  # TODO change to xlarge or 2xlarge
             machine_image=ecs.EcsOptimizedImage.amazon_linux2(
                 hardware_type=ecs.AmiHardwareType.GPU
             ),
@@ -311,19 +410,23 @@ class ComfyUIStack(Stack):
             block_devices=[
                 autoscaling.BlockDevice(
                     device_name="/dev/xvda",
-                    volume=autoscaling.BlockDeviceVolume.ebs(volume_size=100,
-                                                             encrypted=True,
-                                                             volume_type=autoscaling.EbsDeviceVolumeType.GP3)
+                    volume=autoscaling.BlockDeviceVolume.ebs(
+                        volume_size=100,
+                        encrypted=True,
+                        volume_type=autoscaling.EbsDeviceVolumeType.GP3,
+                    ),
                 )
             ],
             vpc_subnets=ec2.SubnetSelection(
                 subnets=[
-                    ec2.Subnet.from_subnet_attributes(self, "WorkflowSubnet",
-                                                      subnet_id=vpc.private_subnets[1].subnet_id,
-                                                      availability_zone="us-east-1b"
-                                                      )
+                    ec2.Subnet.from_subnet_attributes(
+                        self,
+                        "WorkflowSubnet",
+                        subnet_id=vpc.private_subnets[1].subnet_id,
+                        availability_zone="us-east-1b",
+                    )
                 ]
-            )
+            ),
         )
 
         comfyui_workflow_asg.apply_removal_policy(RemovalPolicy.DESTROY)
@@ -341,13 +444,13 @@ class ComfyUIStack(Stack):
         )
 
         cpu_utilization_metric = cloudwatch.Metric(
-            namespace='AWS/EC2',
-            metric_name='CPUUtilization',
+            namespace="AWS/EC2",
+            metric_name="CPUUtilization",
             dimensions_map={
-                'AutoScalingGroupName': comfyui_workflow_asg.auto_scaling_group_name
+                "AutoScalingGroupName": comfyui_workflow_asg.auto_scaling_group_name
             },
-            statistic='Average',
-            period=Duration.minutes(1)
+            statistic="Average",
+            period=Duration.minutes(1),
         )
 
         scaling_policy = autoscaling.CfnScalingPolicy(
@@ -374,27 +477,29 @@ class ComfyUIStack(Stack):
             dimensions=[
                 {
                     "name": "AutoScalingGroupName",
-                    "value": comfyui_workflow_asg.auto_scaling_group_name
+                    "value": comfyui_workflow_asg.auto_scaling_group_name,
                 }
             ],
-            alarm_actions=[scaling_policy.ref]
+            alarm_actions=[scaling_policy.ref],
         )
 
         # Create an ECS Cluster
         cluster = ecs.Cluster(
-            self, "ComfyUICluster",
+            self,
+            "ComfyUICluster",
             vpc=vpc,
             cluster_name=cluster_name,
-            container_insights=True
+            container_insights=True,
         )
 
         # Create ASG Capacity Provider for the ECS Cluster
         capacity_provider = ecs.AsgCapacityProvider(
-            self, "AsgCapacityProvider",
+            self,
+            "AsgCapacityProvider",
             auto_scaling_group=comfyui_workflow_asg,
             enable_managed_scaling=False,
             enable_managed_termination_protection=False,
-            target_capacity_percent=100
+            target_capacity_percent=100,
         )
 
         cluster.add_asg_capacity_provider(capacity_provider)
@@ -412,14 +517,15 @@ class ComfyUIStack(Stack):
         )
 
         task_exec_role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonElasticFileSystemClientFullAccess")
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "AmazonElasticFileSystemClientFullAccess"
+            )
         )
 
         # ECR Repository
         ecr_repository_comfyui = ecr.Repository.from_repository_name(
-            self,
-            "comfyui",
-            repository_name=f"comfyui")
+            self, "comfyui", repository_name=f"comfyui"
+        )
 
         # CloudWatch Logs Group
         log_group = logs.LogGroup(
@@ -429,20 +535,25 @@ class ComfyUIStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
+        ec2_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["logs:CreateLogStream", "logs:PutLogEvents"],
+                resources=[f"{log_group.log_group_arn}:*"],
+            )
+        )
+
         efs_volume = ecs.Volume(
             name="efs-volume",
             efs_volume_configuration=ecs.EfsVolumeConfiguration(
                 file_system_id=efs_file_system.file_system_id,
                 transit_encryption="ENABLED",
-                authorization_config=ecs.AuthorizationConfig(
-                    iam="ENABLED"
-                )
+                authorization_config=ecs.AuthorizationConfig(iam="ENABLED"),
             ),
         )
 
         nvme_volume = ecs.Volume(
-            name="nvme-volume",
-            host=ecs.Host(source_path="/mnt/nvme/comfyui")
+            name="nvme-volume", host=ecs.Host(source_path="/mnt/nvme/comfyui")
         )
 
         # COMFYUI CONFIGURATION
@@ -452,32 +563,36 @@ class ComfyUIStack(Stack):
             network_mode=ecs.NetworkMode.AWS_VPC,
             task_role=task_exec_role,
             execution_role=task_exec_role,
-            volumes=[
-                efs_volume,
-                nvme_volume
-            ]
+            volumes=[efs_volume, nvme_volume],
         )
 
         # Add container to the task definition
         comfyui_workflow_container = comfyui_task_definition.add_container(
             "ComfyUIWorkflowContainer",
-            image=ecs.ContainerImage.from_ecr_repository(ecr_repository_comfyui, "latest"),
+            image=ecs.ContainerImage.from_ecr_repository(
+                ecr_repository_comfyui, "latest"
+            ),
             gpu_count=1,
             memory_limit_mib=63500,
             cpu=15500,
-            logging=ecs.LogDriver.aws_logs(stream_prefix="comfy-ui", log_group=log_group),
+            logging=ecs.LogDriver.aws_logs(
+                stream_prefix="comfy-ui", log_group=log_group
+            ),
             environment={
                 "MODEL_PATH": "/mnt/nvme/comfyui/models",  # TODO: check nvme path mount in comfyui yaml
                 "EFS_MOUNT_PATH": "/home/user/opt/ComfyUI",
             },
             health_check=ecs.HealthCheck(
-                command=["CMD-SHELL", "curl -f http://localhost:8181/system_stats || exit 1"],
+                command=[
+                    "CMD-SHELL",
+                    "curl -f http://localhost:8181/system_stats || exit 1",
+                ],
                 interval=Duration.seconds(15),
                 timeout=Duration.seconds(10),
                 retries=8,
-                start_period=Duration.seconds(180)
+                start_period=Duration.seconds(180),
             ),
-            user="1010"
+            user="1010",
         )
 
         # Mount the host volume to the container
@@ -485,13 +600,13 @@ class ComfyUIStack(Stack):
             ecs.MountPoint(
                 container_path="/home/user/opt/ComfyUI",
                 source_volume="efs-volume",
-                read_only=False
+                read_only=False,
             ),
             ecs.MountPoint(
                 container_path="/mnt/nvme/comfyui",
                 source_volume="nvme-volume",
-                read_only=False
-            )
+                read_only=False,
+            ),
         )
 
         # Port mappings for the container
@@ -529,15 +644,14 @@ class ComfyUIStack(Stack):
             task_definition=comfyui_task_definition,
             capacity_provider_strategies=[
                 ecs.CapacityProviderStrategy(
-                    capacity_provider=capacity_provider.capacity_provider_name,
-                    weight=1
+                    capacity_provider=capacity_provider.capacity_provider_name, weight=1
                 )
             ],
             security_groups=[ecs_service_security_group],
             health_check_grace_period=Duration.seconds(480),
             desired_count=1,
             min_healthy_percent=0,  # allowing to scale down to zero tasks
-            max_healthy_percent=100
+            max_healthy_percent=100,
         )
 
         comfyui_alb_security_group.add_ingress_rule(
@@ -553,7 +667,7 @@ class ComfyUIStack(Stack):
             vpc=vpc,
             load_balancer_name="ComfyUIALB",
             internet_facing=True,
-            security_group=comfyui_alb_security_group
+            security_group=comfyui_alb_security_group,
         )
 
         # log bucket for complete app stack
@@ -566,12 +680,10 @@ class ComfyUIStack(Stack):
             enforce_ssl=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            object_ownership=s3.ObjectOwnership.OBJECT_WRITER
+            object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 
-        comfyui_alb.log_access_logs(
-            avatar_log_bucket,
-            prefix="load-balancer-logs")
+        comfyui_alb.log_access_logs(avatar_log_bucket, prefix="load-balancer-logs")
 
         trail = cloudtrail.Trail(
             self,
@@ -582,7 +694,7 @@ class ComfyUIStack(Stack):
             trail_name=f"ComfyUICloudTrail",
             send_to_cloud_watch_logs=True,
             management_events=cloudtrail.ReadWriteType.ALL,
-            include_global_service_events=True
+            include_global_service_events=True,
         )
 
         # ComfyUI CloudFront distribution
@@ -593,7 +705,7 @@ class ComfyUIStack(Stack):
                 origin=origins.LoadBalancerV2Origin(
                     comfyui_alb,
                     protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
-                    origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2]
+                    origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2],
                 ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
@@ -606,39 +718,49 @@ class ComfyUIStack(Stack):
             log_bucket=avatar_log_bucket,
             log_file_prefix="comfyui-cloudfront-logs/",
             log_includes_cookies=True,
-            geo_restriction=geo_restriction
+            geo_restriction=geo_restriction,
         )
 
         comfyui_url = record_name_comfyui
         # Add Route 53 A Alias records for ComfyUI and Avatars App
         comfyui_record = route53.ARecord(
-            self, "ComfyUIRecord",
+            self,
+            "ComfyUIRecord",
             zone=hosted_zone,
             record_name=comfyui_url,
-            target=route53.RecordTarget.from_alias(route53_targets.CloudFrontTarget(comfyui_cloudfront_distribution))
+            target=route53.RecordTarget.from_alias(
+                route53_targets.CloudFrontTarget(comfyui_cloudfront_distribution)
+            ),
         )
 
         lambda_role = iam.Role(
-            self, "LambdaExecutionRole",
+            self,
+            "LambdaExecutionRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                ),
                 iam.ManagedPolicy.from_aws_managed_policy_name("AutoScalingFullAccess"),
-            ]
+            ],
         )
 
-        lambda_role.add_to_policy(iam.PolicyStatement(
-            actions=["ecs:DescribeServices",
-                     "ecs:ListTasks",
-                     "elasticloadbalancing:ModifyListener",
-                     "elasticloadbalancing:ModifyRule",
-                     "elasticloadbalancing:DescribeRules",
-                     "elasticloadbalancing:DescribeListeners",
-                     "ecs:DescribeServices",
-                     "ecs:UpdateService",
-                     "ssm:SendCommand"],
-            resources=["*"]
-        ))
+        lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ecs:DescribeServices",
+                    "ecs:ListTasks",
+                    "elasticloadbalancing:ModifyListener",
+                    "elasticloadbalancing:ModifyRule",
+                    "elasticloadbalancing:DescribeRules",
+                    "elasticloadbalancing:DescribeListeners",
+                    "ecs:DescribeServices",
+                    "ecs:UpdateService",
+                    "ssm:SendCommand",
+                ],
+                resources=["*"],
+            )
+        )
 
         admin_lambda = lambda_.Function(
             self,
@@ -648,7 +770,7 @@ class ComfyUIStack(Stack):
             handler="admin.handler",
             code=lambda_.Code.from_asset("./comfyui_aws_stack/admin_lambda"),
             timeout=Duration.seconds(amount=60),
-            memory_size=512
+            memory_size=512,
         )
 
         scalein_listener_lambda = lambda_.Function(
@@ -659,7 +781,7 @@ class ComfyUIStack(Stack):
             handler="scalein_listener.handler",
             code=lambda_.Code.from_asset("./comfyui_aws_stack/admin_lambda"),
             timeout=Duration.seconds(amount=60),
-            memory_size=512
+            memory_size=512,
         )
 
         # Add target groups for ECS service
@@ -673,8 +795,10 @@ class ComfyUIStack(Stack):
             target_type=elbv2.TargetType.IP,
             targets=[
                 comfyui_workflow_service.load_balancer_target(
-                    container_name=comfyui_workflow_container.container_name, container_port=8181
-                )],
+                    container_name=comfyui_workflow_container.container_name,
+                    container_port=8181,
+                )
+            ],
             health_check=elbv2.HealthCheck(
                 enabled=True,
                 path="/system_stats",
@@ -685,7 +809,7 @@ class ComfyUIStack(Stack):
                 timeout=Duration.seconds(30),
                 unhealthy_threshold_count=8,
                 healthy_threshold_count=2,
-            )
+            ),
         )
 
         # ecs_comfyui_workflow_target_group.add_target(comfyui_workflow_service)
@@ -696,7 +820,7 @@ class ComfyUIStack(Stack):
             target_group_name="LambdaAdminTargetGroup",
             vpc=vpc,
             target_type=elbv2.TargetType.LAMBDA,
-            targets=[targets.LambdaTarget(admin_lambda)]
+            targets=[targets.LambdaTarget(admin_lambda)],
         )
 
         ##########################################################
@@ -715,15 +839,15 @@ class ComfyUIStack(Stack):
             standard_attributes=cognito.StandardAttributes(
                 email=cognito.StandardAttribute(mutable=True, required=False),
                 given_name=cognito.StandardAttribute(mutable=True, required=False),
-                family_name=cognito.StandardAttribute(mutable=True, required=False)
+                family_name=cognito.StandardAttribute(mutable=True, required=False),
             ),
             password_policy=cognito.PasswordPolicy(
                 min_length=8,
                 require_uppercase=True,
                 require_digits=True,
-                require_symbols=True
+                require_symbols=True,
             ),
-            advanced_security_mode=cognito.AdvancedSecurityMode.ENFORCED
+            advanced_security_mode=cognito.AdvancedSecurityMode.ENFORCED,
         )
 
         # Add a custom domain for the hosted UI
@@ -731,7 +855,7 @@ class ComfyUIStack(Stack):
             "user-pool-domain",
             cognito_domain=cognito.CognitoDomainOptions(
                 domain_prefix=cognito_custom_domain
-            )
+            ),
         )
 
         # Create an app client that the ALB can use for authentication
@@ -746,29 +870,29 @@ class ComfyUIStack(Stack):
                     f"https://{comfyui_url}",
                     f"https://{comfyui_url}/oauth2/idpresponse",
                     f"https://{comfyui_cloudfront_distribution.domain_name}",
-                    f"https://{comfyui_cloudfront_distribution.domain_name}/oauth2/idpresponse"
+                    f"https://{comfyui_cloudfront_distribution.domain_name}/oauth2/idpresponse",
                 ],
                 flows=cognito.OAuthFlows(authorization_code_grant=True),
-                scopes=[
-                    cognito.OAuthScope.OPENID
-                ]
+                scopes=[cognito.OAuthScope.OPENID],
             ),
             supported_identity_providers=[
                 cognito.UserPoolClientIdentityProvider.COGNITO
-            ]
+            ],
         )
 
         # Logout URLs and redirect URIs can't be set in CDK constructs natively ...yet
-        user_pool_client_cf: cognito.CfnUserPoolClient = user_pool_client.node.default_child
-        user_pool_client_cf.logout_ur_ls = [
-            f"https://{comfyui_url}"
-        ]
+        user_pool_client_cf: cognito.CfnUserPoolClient = (
+            user_pool_client.node.default_child
+        )
+        user_pool_client_cf.logout_ur_ls = [f"https://{comfyui_url}"]
 
         user_pool_full_domain = user_pool_custom_domain.base_url()
-        redirect_uri = urllib.parse.quote('https://' + comfyui_alb_dns)
-        user_pool_logout_url = f"{user_pool_full_domain}/logout?" \
-                               + f"client_id={user_pool_client.user_pool_client_id}&" \
-                               + f"logout_uri={redirect_uri}"
+        redirect_uri = urllib.parse.quote("https://" + comfyui_alb_dns)
+        user_pool_logout_url = (
+            f"{user_pool_full_domain}/logout?"
+            + f"client_id={user_pool_client.user_pool_client_id}&"
+            + f"logout_uri={redirect_uri}"
+        )
 
         user_pool_user_info_url = f"{user_pool_full_domain}/oauth2/userInfo"
 
@@ -778,8 +902,12 @@ class ComfyUIStack(Stack):
             secret_name="CognitoSecrets",
             description="Cognito User Pool, Client ID and Secret",
             secret_object_value={
-                "COGNITO_POOL_ID": SecretValue.unsafe_plain_text(user_pool.user_pool_id),
-                "COGNITO_APP_CLIENT_ID": SecretValue.unsafe_plain_text(user_pool_client.user_pool_client_id),
+                "COGNITO_POOL_ID": SecretValue.unsafe_plain_text(
+                    user_pool.user_pool_id
+                ),
+                "COGNITO_APP_CLIENT_ID": SecretValue.unsafe_plain_text(
+                    user_pool_client.user_pool_client_id
+                ),
                 "COGNITO_APP_CLIENT_SECRET": user_pool_client.user_pool_client_secret,
             },
         )
@@ -796,7 +924,7 @@ class ComfyUIStack(Stack):
                 user_pool=user_pool,
                 user_pool_client=user_pool_client,
                 user_pool_domain=user_pool_custom_domain,
-            )
+            ),
         )
 
         ##########################################################
@@ -817,8 +945,12 @@ class ComfyUIStack(Stack):
         )
 
         admin_lambda.add_environment("ECS_CLUSTER_NAME", cluster.cluster_name)
-        admin_lambda.add_environment("WORKFLOW_SERVICE_NAME", comfyui_workflow_service.service_name)
-        admin_lambda.add_environment("WORKFLOW_ASG_NAME", comfyui_workflow_asg.auto_scaling_group_name)
+        admin_lambda.add_environment(
+            "WORKFLOW_SERVICE_NAME", comfyui_workflow_service.service_name
+        )
+        admin_lambda.add_environment(
+            "WORKFLOW_ASG_NAME", comfyui_workflow_asg.auto_scaling_group_name
+        )
         admin_lambda.add_environment("LISTENER_ARN", comfyui_listener.listener_arn)
 
         comfyui_workflow_asg.add_lifecycle_hook(
@@ -826,12 +958,16 @@ class ComfyUIStack(Stack):
             lifecycle_transition=autoscaling.LifecycleTransition.INSTANCE_TERMINATING,
             heartbeat_timeout=Duration.seconds(30),
             default_result=autoscaling.DefaultResult.CONTINUE,
-            notification_target=hooktargets.FunctionHook(admin_lambda)
+            notification_target=hooktargets.FunctionHook(admin_lambda),
         )
 
         # ScaleIn Listener and topic subscription
-        scalein_listener_lambda.add_environment("ASG_NAME", comfyui_workflow_asg.auto_scaling_group_name)
-        scalein_listener_lambda.add_environment("LISTENER_RULE_ARN", lambda_admin_rule.listener_rule_arn)
+        scalein_listener_lambda.add_environment(
+            "ASG_NAME", comfyui_workflow_asg.auto_scaling_group_name
+        )
+        scalein_listener_lambda.add_environment(
+            "LISTENER_RULE_ARN", lambda_admin_rule.listener_rule_arn
+        )
 
         # Add authentication action as the first priority rule
         auth_rule = comfyui_listener.add_action(
@@ -843,13 +979,10 @@ class ComfyUIStack(Stack):
                 user_pool_client=user_pool_client,
                 user_pool_domain=user_pool_custom_domain,
             ),
-            conditions=[elbv2.ListenerCondition.path_patterns(["/*"])]
+            conditions=[elbv2.ListenerCondition.path_patterns(["/*"])],
         )
 
-        trail.add_lambda_event_selector([
-            admin_lambda,
-            scalein_listener_lambda
-        ])
+        trail.add_lambda_event_selector([admin_lambda, scalein_listener_lambda])
 
         #############################################################
         # COMFYUI-AVATAR APP and Gallery depending on DeploymentType
@@ -876,19 +1009,23 @@ class ComfyUIStack(Stack):
                 block_devices=[
                     autoscaling.BlockDevice(
                         device_name="/dev/xvda",
-                        volume=autoscaling.BlockDeviceVolume.ebs(volume_size=100,
-                                                                 encrypted=True,
-                                                                 volume_type=autoscaling.EbsDeviceVolumeType.GP3)
+                        volume=autoscaling.BlockDeviceVolume.ebs(
+                            volume_size=100,
+                            encrypted=True,
+                            volume_type=autoscaling.EbsDeviceVolumeType.GP3,
+                        ),
                     )
                 ],
                 vpc_subnets=ec2.SubnetSelection(
                     subnets=[
-                        ec2.Subnet.from_subnet_attributes(self, "APISubnet",
-                                                          subnet_id=vpc.private_subnets[1].subnet_id,
-                                                          availability_zone="us-east-1b"
-                                                          )
+                        ec2.Subnet.from_subnet_attributes(
+                            self,
+                            "APISubnet",
+                            subnet_id=vpc.private_subnets[1].subnet_id,
+                            availability_zone="us-east-1b",
+                        )
                     ]
-                )
+                ),
             )
 
             # COMFYUI CONFIGURATION
@@ -898,32 +1035,36 @@ class ComfyUIStack(Stack):
                 network_mode=ecs.NetworkMode.AWS_VPC,
                 task_role=task_exec_role,
                 execution_role=task_exec_role,
-                volumes=[
-                    efs_volume,
-                    nvme_volume
-                ]
+                volumes=[efs_volume, nvme_volume],
             )
 
             # Add container to the task definition
             comfyui_api_container = comfyui_api_task_definition.add_container(
                 "ComfyUIAPIContainer",
-                image=ecs.ContainerImage.from_ecr_repository(ecr_repository_comfyui, "latest"),
+                image=ecs.ContainerImage.from_ecr_repository(
+                    ecr_repository_comfyui, "latest"
+                ),
                 gpu_count=1,
                 memory_limit_mib=15700,
                 cpu=4000,
-                logging=ecs.LogDriver.aws_logs(stream_prefix="comfy-ui", log_group=log_group),
+                logging=ecs.LogDriver.aws_logs(
+                    stream_prefix="comfy-ui", log_group=log_group
+                ),
                 environment={
                     "MODEL_PATH": "/mnt/nvme/comfyui/models",  # TODO: check nvme path mount in comfyui yaml
                     "EFS_MOUNT_PATH": "/home/user/opt/ComfyUI",
                 },
                 health_check=ecs.HealthCheck(
-                    command=["CMD-SHELL", "curl -f http://localhost:8181/system_stats || exit 1"],
+                    command=[
+                        "CMD-SHELL",
+                        "curl -f http://localhost:8181/system_stats || exit 1",
+                    ],
                     interval=Duration.seconds(15),
                     timeout=Duration.seconds(10),
                     retries=8,
-                    start_period=Duration.seconds(180)
+                    start_period=Duration.seconds(180),
                 ),
-                user="1010"
+                user="1010",
             )
 
             # Mount the host volume to the container
@@ -931,13 +1072,13 @@ class ComfyUIStack(Stack):
                 ecs.MountPoint(
                     container_path="/home/user/opt/ComfyUI",
                     source_volume="efs-volume",
-                    read_only=False
+                    read_only=False,
                 ),
                 ecs.MountPoint(
                     container_path="/mnt/nvme/comfyui",
                     source_volume="nvme-volume",
-                    read_only=False
-                )
+                    read_only=False,
+                ),
             )
 
             # Port mappings for the container
@@ -951,11 +1092,12 @@ class ComfyUIStack(Stack):
             )
 
             api_capacity_provider = ecs.AsgCapacityProvider(
-                self, "ApiAsgCapacityProvider",
+                self,
+                "ApiAsgCapacityProvider",
                 auto_scaling_group=comfyui_api_asg,
                 enable_managed_scaling=False,
                 enable_managed_termination_protection=False,
-                target_capacity_percent=100
+                target_capacity_percent=100,
             )
 
             cluster.add_asg_capacity_provider(api_capacity_provider)
@@ -969,23 +1111,28 @@ class ComfyUIStack(Stack):
                 capacity_provider_strategies=[
                     ecs.CapacityProviderStrategy(
                         capacity_provider=api_capacity_provider.capacity_provider_name,
-                        weight=1
+                        weight=1,
                     )
                 ],
                 security_groups=[ecs_service_security_group],
                 health_check_grace_period=Duration.seconds(480),
                 desired_count=1,
                 min_healthy_percent=0,  # allowing to scale down to zero tasks
-                max_healthy_percent=100
+                max_healthy_percent=100,
             )
 
             # add admin environment variables
-            admin_lambda.add_environment("API_ASG_NAME", comfyui_api_asg.auto_scaling_group_name)
-            admin_lambda.add_environment("API_SERVICE_NAME", comfyui_api_service.service_name)
+            admin_lambda.add_environment(
+                "API_ASG_NAME", comfyui_api_asg.auto_scaling_group_name
+            )
+            admin_lambda.add_environment(
+                "API_SERVICE_NAME", comfyui_api_service.service_name
+            )
 
             # Combined Security Group for Avatar App and optional Gallery
             avatar_services_security_group = ec2.SecurityGroup(
-                self, "AvatarServicesSecurityGroup",
+                self,
+                "AvatarServicesSecurityGroup",
                 security_group_name="AvatarServicesSecurityGroup",
                 vpc=vpc,
                 description="Security Group for Avatar ECS Services",
@@ -1018,7 +1165,7 @@ class ComfyUIStack(Stack):
                 "ComfyUIALBInternalSecurityGroup",
                 security_group_name="ComfyUIALBInternalSecurityGroup",
                 vpc=vpc,
-                description="Security group for internal ComfyUI ALB"
+                description="Security group for internal ComfyUI ALB",
             )
 
             comfyui_alb_internal_security_group.add_ingress_rule(
@@ -1040,18 +1187,19 @@ class ComfyUIStack(Stack):
                 vpc=vpc,
                 load_balancer_name="ComfyUIALBInternal",
                 internet_facing=False,
-                security_group=comfyui_alb_internal_security_group)
+                security_group=comfyui_alb_internal_security_group,
+            )
 
             comfyui_alb_internal.log_access_logs(
-                avatar_log_bucket,
-                prefix="comfyui-alb-internal-load-balancer-logs")
+                avatar_log_bucket, prefix="comfyui-alb-internal-load-balancer-logs"
+            )
 
             avatar_alb_security_group = ec2.SecurityGroup(
                 self,
                 "AvatarALBSecurityGroup",
                 security_group_name="AvatarALBSecurityGroup",
                 vpc=vpc,
-                description="Security group for Avatar ALB"
+                description="Security group for Avatar ALB",
             )
 
             avatar_alb_security_group.add_ingress_rule(
@@ -1077,8 +1225,10 @@ class ComfyUIStack(Stack):
                 target_type=elbv2.TargetType.IP,
                 targets=[
                     comfyui_api_service.load_balancer_target(
-                        container_name=comfyui_api_container.container_name, container_port=8181
-                    )],
+                        container_name=comfyui_api_container.container_name,
+                        container_port=8181,
+                    )
+                ],
                 health_check=elbv2.HealthCheck(
                     enabled=True,
                     path="/system_stats",
@@ -1091,7 +1241,7 @@ class ComfyUIStack(Stack):
                     healthy_threshold_count=2,
                 ),
                 stickiness_cookie_name="COMFY-SESSION",
-                stickiness_cookie_duration=Duration.days(1)
+                stickiness_cookie_duration=Duration.days(1),
             )
 
             # ecs_comfyui_api_target_group.add_target(comfyui_api_service)
@@ -1101,7 +1251,9 @@ class ComfyUIStack(Stack):
                 port=8181,
                 open=False,
                 protocol=elbv2.ApplicationProtocol.HTTP,
-                default_action=elbv2.ListenerAction.forward([ecs_comfyui_api_target_group])
+                default_action=elbv2.ListenerAction.forward(
+                    [ecs_comfyui_api_target_group]
+                ),
             )
 
             # Application Load Balancer
@@ -1111,11 +1263,12 @@ class ComfyUIStack(Stack):
                 vpc=vpc,
                 load_balancer_name="AvatarALB",
                 internet_facing=True,
-                security_group=avatar_alb_security_group)
+                security_group=avatar_alb_security_group,
+            )
 
             avatar_alb.log_access_logs(
-                avatar_log_bucket,
-                prefix="avatar-load-balancer-logs")
+                avatar_log_bucket, prefix="avatar-load-balancer-logs"
+            )
 
             domain_names = [record_name_avatar_app]
 
@@ -1123,27 +1276,28 @@ class ComfyUIStack(Stack):
                 domain_names = [record_name_avatar_app, record_name_avatar_gallery]
 
             # ComfyUI CloudFront distribution
-            avatar_cloudfront_distribution = cloudfront.Distribution(self, "AvatarDistribution",
-                                                                     default_behavior=cloudfront.BehaviorOptions(
-                                                                         origin=origins.LoadBalancerV2Origin(
-                                                                             avatar_alb,
-                                                                             protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
-                                                                             origin_ssl_protocols=[
-                                                                                 cloudfront.OriginSslPolicy.TLS_V1_2]
-                                                                         ),
-                                                                         viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                                                                         allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
-                                                                         cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
-                                                                         origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER,
-                                                                     ),
-                                                                     domain_names=domain_names,
-                                                                     certificate=cloudfront_certificate,
-                                                                     enable_ipv6=False,
-                                                                     log_bucket=avatar_log_bucket,
-                                                                     log_file_prefix="avatar-cloudfront-logs/",
-                                                                     log_includes_cookies=True,
-                                                                     geo_restriction=geo_restriction
-                                                                     )
+            avatar_cloudfront_distribution = cloudfront.Distribution(
+                self,
+                "AvatarDistribution",
+                default_behavior=cloudfront.BehaviorOptions(
+                    origin=origins.LoadBalancerV2Origin(
+                        avatar_alb,
+                        protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+                        origin_ssl_protocols=[cloudfront.OriginSslPolicy.TLS_V1_2],
+                    ),
+                    viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                    allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                    cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                    origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER,
+                ),
+                domain_names=domain_names,
+                certificate=cloudfront_certificate,
+                enable_ipv6=False,
+                log_bucket=avatar_log_bucket,
+                log_file_prefix="avatar-cloudfront-logs/",
+                log_includes_cookies=True,
+                geo_restriction=geo_restriction,
+            )
 
             avatar_cloudfront_distribution.add_behavior(
                 path_pattern="/*",
@@ -1151,53 +1305,54 @@ class ComfyUIStack(Stack):
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
                 cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
-                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER
+                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER,
             )
 
-            alb_log_role = iam.Role(self, "ALBLogRole",
-                                    assumed_by=iam.ServicePrincipal("elasticloadbalancing.amazonaws.com"),
-                                    description="Role for ALBs to access S3 logging bucket"
-                                    )
+            alb_log_role = iam.Role(
+                self,
+                "ALBLogRole",
+                assumed_by=iam.ServicePrincipal("elasticloadbalancing.amazonaws.com"),
+                description="Role for ALBs to access S3 logging bucket",
+            )
 
-            alb_log_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "s3:GetObject",
-                    "s3:PutObject",
-                    "s3:ListBucket",
-                    "s3:GetBucketAcl",
-                ],
-                resources=[
-                    avatar_log_bucket.bucket_arn,
-                    f"{avatar_log_bucket.bucket_arn}/*"
-                ]
-            ))
+            alb_log_role.add_to_policy(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:GetObject",
+                        "s3:PutObject",
+                        "s3:ListBucket",
+                        "s3:GetBucketAcl",
+                    ],
+                    resources=[
+                        avatar_log_bucket.bucket_arn,
+                        f"{avatar_log_bucket.bucket_arn}/*",
+                    ],
+                )
+            )
 
             avatar_log_bucket.add_to_resource_policy(
                 iam.PolicyStatement(
-                    actions=[
-                        "s3:PutObject",
-                        "s3:PutObjectAcl"
-                    ],
+                    actions=["s3:PutObject", "s3:PutObjectAcl"],
                     resources=[f"{avatar_log_bucket.bucket_arn}/*"],
-                    principals=[
-                        iam.ServicePrincipal("cloudfront.amazonaws.com")
-                    ],
+                    principals=[iam.ServicePrincipal("cloudfront.amazonaws.com")],
                     conditions={
                         "StringEquals": {
                             "aws:SourceArn": f"arn:aws:cloudfront::{self.account}:distribution/*"
                         }
-                    }
+                    },
                 )
             )
 
             # Add Route 53 A Alias records for ComfyUI and Avatars App
             avatar_app_record = route53.ARecord(
-                self, "AvatarAppRecord",
+                self,
+                "AvatarAppRecord",
                 zone=hosted_zone,
                 record_name=record_name_avatar_app,
                 target=route53.RecordTarget.from_alias(
-                    route53_targets.CloudFrontTarget(avatar_cloudfront_distribution)),
+                    route53_targets.CloudFrontTarget(avatar_cloudfront_distribution)
+                ),
             )
 
             avatar_bucket = s3.Bucket(
@@ -1208,18 +1363,17 @@ class ComfyUIStack(Stack):
                 auto_delete_objects=True,
                 enforce_ssl=True,
                 server_access_logs_bucket=avatar_log_bucket,
-                server_access_logs_prefix="avatar-bucket-log/"
+                server_access_logs_prefix="avatar-bucket-log/",
             )
 
-            trail.add_s3_event_selector([cloudtrail.S3EventSelector(
-                bucket=avatar_bucket
-            )])
+            trail.add_s3_event_selector(
+                [cloudtrail.S3EventSelector(bucket=avatar_bucket)]
+            )
 
             # ECR Repository
             ecr_repository_avatar_app = ecr.Repository.from_repository_name(
-                self,
-                "comfyui-avatar-app",
-                repository_name=f"comfyui-avatar-app")
+                self, "comfyui-avatar-app", repository_name=f"comfyui-avatar-app"
+            )
 
             # Create IAM Role for ECS Task Execution
             avatar_task_exec_role = iam.Role(
@@ -1233,122 +1387,59 @@ class ComfyUIStack(Stack):
                 ],
             )
 
-            avatar_task_exec_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "s3:GetObject",
-                    "s3:PutObject",
-                    "s3:DeleteObject",
-                    "s3:ListBucket",
-                ],
-                resources=[
-                    avatar_bucket.bucket_arn,
-                    f"{avatar_bucket.bucket_arn}/*"
-                ]
-            ))
+            avatar_task_exec_role.add_to_policy(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:GetObject",
+                        "s3:PutObject",
+                        "s3:DeleteObject",
+                        "s3:ListBucket",
+                    ],
+                    resources=[
+                        avatar_bucket.bucket_arn,
+                        f"{avatar_bucket.bucket_arn}/*",
+                    ],
+                )
+            )
 
             # Rekognition moderation
-            avatar_task_exec_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "rekognition:DetectModerationLabels",
-                    "rekognition:DetectFaces"
-                ],
-                resources=[f"*"]
-            ))
+            avatar_task_exec_role.add_to_policy(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "rekognition:DetectModerationLabels",
+                        "rekognition:DetectFaces",
+                    ],
+                    resources=[f"*"],
+                )
+            )
 
-            avatar_task_exec_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=["bedrock:InvokeModel"],
-                resources=[f"arn:aws:bedrock:{self.region}::foundation-model/*"]
-            ))
-
-            ec2_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "ecs:CreateCluster",
-                    "ecs:DeregisterContainerInstance",
-                    "ecs:DiscoverPollEndpoint",
-                    "ecs:Poll",
-                    "ecs:RegisterContainerInstance",
-                    "ecs:StartTelemetrySession",
-                    "ecs:UpdateContainerInstancesState",
-                    "ecs:Submit*",
-                    "ec2:DescribeInstances",
-                    "ec2:DescribeTags",
-                    "ecr:GetAuthorizationToken",
-                    "ecr:BatchCheckLayerAvailability",
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchGetImage"
-                ],
-                resources=["*"]
-            ))
-
-            ec2_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "logs:CreateLogStream",
-                    "logs:PutLogEvents"
-                ],
-                resources=[f"{log_group.log_group_arn}:*"]
-            ))
-
-            ec2_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "autoscaling:CompleteLifecycleAction",
-                    "autoscaling:RecordLifecycleActionHeartbeat",
-                    "autoscaling:DescribeAutoScalingInstances",
-                    "autoscaling:DescribeLifecycleHooks"
-                ],
-                resources=[f"arn:aws:autoscaling:{self.region}:{self.account}:autoScalingGroup:*"]
-            ))
-
-            ec2_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "ec2:AttachVolume",
-                    "ec2:CreateVolume",
-                    "ec2:CreateSnapshot",
-                    "ec2:CreateTags",
-                    "ec2:DeleteVolume",
-                    "ec2:DeleteSnapshot",
-                    "ec2:DescribeAvailabilityZones",
-                    "ec2:DescribeInstances",
-                    "ec2:DescribeVolumes",
-                    "ec2:DescribeVolumeAttribute",
-                    "ec2:DescribeVolumeStatus",
-                    "ec2:DescribeSnapshots",
-                    "ec2:CopySnapshot",
-                    "ec2:DescribeSnapshotAttribute",
-                    "ec2:DetachVolume",
-                    "ec2:ModifySnapshotAttribute",
-                    "ec2:ModifyVolumeAttribute",
-                    "ec2:DescribeTags",
-                    "ec2:EnableVolumeIO"
-                ],
-                resources=["*"]
-            ))
+            avatar_task_exec_role.add_to_policy(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["bedrock:InvokeModel"],
+                    resources=[f"arn:aws:bedrock:{self.region}::foundation-model/*"],
+                )
+            )
 
             # add policy also to ec2 role, that you can acccess the bucket over the ec2 instance
-            ec2_role.add_to_policy(iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    "s3:GetObject",
-                    "s3:PutObject",
-                    "s3:DeleteObject",
-                    "s3:ListBucket",
-                ],
-                resources=[
-                    avatar_bucket.bucket_arn,
-                    f"{avatar_bucket.bucket_arn}/*",
-                    model_bucket.bucket_arn,
-                    f"{model_bucket.bucket_arn}/*",
-                ]
-            ))
-
-            ec2_role.add_managed_policy(
-                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonElasticFileSystemClientFullAccess")
+            ec2_role.add_to_policy(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:GetObject",
+                        "s3:PutObject",
+                        "s3:DeleteObject",
+                        "s3:ListBucket",
+                    ],
+                    resources=[
+                        avatar_bucket.bucket_arn,
+                        f"{avatar_bucket.bucket_arn}/*",
+                        model_bucket.bucket_arn,
+                        f"{model_bucket.bucket_arn}/*",
+                    ],
+                )
             )
 
             ##########################################################
@@ -1366,31 +1457,41 @@ class ComfyUIStack(Stack):
             avatar_app_container = avatar_app_task_definition.add_container(
                 "AvatarAppContainer",
                 container_name="AvatarAppContainer",
-                image=ecs.ContainerImage.from_ecr_repository(ecr_repository_avatar_app, "latest"),
-                logging=ecs.LogDriver.aws_logs(stream_prefix="avatar-app", log_group=log_group),
+                image=ecs.ContainerImage.from_ecr_repository(
+                    ecr_repository_avatar_app, "latest"
+                ),
+                logging=ecs.LogDriver.aws_logs(
+                    stream_prefix="avatar-app", log_group=log_group
+                ),
                 health_check=ecs.HealthCheck(
-                    command=["CMD-SHELL", "curl -f http://localhost:8501/healthz || exit 1"],
+                    command=[
+                        "CMD-SHELL",
+                        "curl -f http://localhost:8501/healthz || exit 1",
+                    ],
                     interval=Duration.seconds(25),
                     timeout=Duration.seconds(20),
                     retries=8,
-                    start_period=Duration.seconds(30)
+                    start_period=Duration.seconds(30),
                 ),
                 environment={
                     "COMFYUI": comfyui_alb_internal.load_balancer_dns_name,
                     "S3_BUCKET": avatar_bucket.bucket_name,
-                    "S3_BUCKET_PREFIX": "avatars/"
+                    "S3_BUCKET_PREFIX": "avatars/",
                 },
                 secrets={
-                    "COGNITO_POOL_ID": ecs.Secret.from_secrets_manager(cognito_secrets, "COGNITO_POOL_ID"),
-                    "COGNITO_APP_CLIENT_ID": ecs.Secret.from_secrets_manager(cognito_secrets, "COGNITO_APP_CLIENT_ID"),
-                    "COGNITO_APP_CLIENT_SECRET": ecs.Secret.from_secrets_manager(cognito_secrets,
-                                                                                 "COGNITO_APP_CLIENT_SECRET")
-                }
+                    "COGNITO_POOL_ID": ecs.Secret.from_secrets_manager(
+                        cognito_secrets, "COGNITO_POOL_ID"
+                    ),
+                    "COGNITO_APP_CLIENT_ID": ecs.Secret.from_secrets_manager(
+                        cognito_secrets, "COGNITO_APP_CLIENT_ID"
+                    ),
+                    "COGNITO_APP_CLIENT_SECRET": ecs.Secret.from_secrets_manager(
+                        cognito_secrets, "COGNITO_APP_CLIENT_SECRET"
+                    ),
+                },
             )
 
-            avatar_app_container.add_port_mappings(
-                ecs.PortMapping(container_port=8501)
-            )
+            avatar_app_container.add_port_mappings(ecs.PortMapping(container_port=8501))
 
             avatar_services_security_group.add_ingress_rule(
                 peer=avatar_alb_security_group,
@@ -1405,7 +1506,7 @@ class ComfyUIStack(Stack):
                 cluster=cluster,
                 task_definition=avatar_app_task_definition,
                 desired_count=1,
-                security_groups=[avatar_services_security_group]
+                security_groups=[avatar_services_security_group],
             )
 
             avatar_app_target_group = elbv2.ApplicationTargetGroup(
@@ -1425,7 +1526,7 @@ class ComfyUIStack(Stack):
                     timeout=Duration.seconds(5),
                     unhealthy_threshold_count=3,
                     healthy_threshold_count=2,
-                )
+                ),
             )
 
             avatar_app_target_group.add_target(avatar_app_service)
@@ -1436,7 +1537,7 @@ class ComfyUIStack(Stack):
                 open=False,
                 protocol=elbv2.ApplicationProtocol.HTTPS,
                 certificates=[alb_certificate],
-                default_action=elbv2.ListenerAction.forward([avatar_app_target_group])
+                default_action=elbv2.ListenerAction.forward([avatar_app_target_group]),
             )
 
             avatar_app_rule = elbv2.ApplicationListenerRule(
@@ -1444,8 +1545,10 @@ class ComfyUIStack(Stack):
                 "AvatarAppRule",
                 listener=avatar_listener,
                 priority=1,
-                conditions=[elbv2.ListenerCondition.host_headers([record_name_avatar_app])],
-                action=elbv2.ListenerAction.forward([avatar_app_target_group])
+                conditions=[
+                    elbv2.ListenerCondition.host_headers([record_name_avatar_app])
+                ],
+                action=elbv2.ListenerAction.forward([avatar_app_target_group]),
             )
 
             ##########################################################
@@ -1454,18 +1557,21 @@ class ComfyUIStack(Stack):
 
             if deployment_type in ["FullStack"]:
                 avatar_gallery_record = route53.ARecord(
-                    self, "AvatarGalleryRecord",
+                    self,
+                    "AvatarGalleryRecord",
                     zone=hosted_zone,
                     record_name=record_name_avatar_gallery,
                     target=route53.RecordTarget.from_alias(
-                        route53_targets.CloudFrontTarget(avatar_cloudfront_distribution)),
+                        route53_targets.CloudFrontTarget(avatar_cloudfront_distribution)
+                    ),
                 )
 
                 # ECR Repository
                 ecr_repository_avatar_gallery = ecr.Repository.from_repository_name(
                     self,
                     "comfyui-avatar-gallery",
-                    repository_name=f"comfyui-avatar-gallery")
+                    repository_name=f"comfyui-avatar-gallery",
+                )
 
                 avatar_gallery_task_definition = ecs.FargateTaskDefinition(
                     self,
@@ -1479,26 +1585,37 @@ class ComfyUIStack(Stack):
                 avatar_gallery_container = avatar_gallery_task_definition.add_container(
                     "AvatarGalleryContainer",
                     container_name="AvatarGalleryContainer",
-                    image=ecs.ContainerImage.from_ecr_repository(ecr_repository_avatar_gallery, "latest"),
-                    logging=ecs.LogDriver.aws_logs(stream_prefix="avatar-gallery", log_group=log_group),
+                    image=ecs.ContainerImage.from_ecr_repository(
+                        ecr_repository_avatar_gallery, "latest"
+                    ),
+                    logging=ecs.LogDriver.aws_logs(
+                        stream_prefix="avatar-gallery", log_group=log_group
+                    ),
                     health_check=ecs.HealthCheck(
-                        command=["CMD-SHELL", "curl -f http://localhost:8502/healthz || exit 1"],
+                        command=[
+                            "CMD-SHELL",
+                            "curl -f http://localhost:8502/healthz || exit 1",
+                        ],
                         interval=Duration.seconds(15),
                         timeout=Duration.seconds(10),
                         retries=8,
-                        start_period=Duration.seconds(30)
+                        start_period=Duration.seconds(30),
                     ),
                     environment={
                         "S3_BUCKET": avatar_bucket.bucket_name,
-                        "S3_BUCKET_PREFIX": "avatars/"
+                        "S3_BUCKET_PREFIX": "avatars/",
                     },
                     secrets={
-                        "COGNITO_POOL_ID": ecs.Secret.from_secrets_manager(cognito_secrets, "COGNITO_POOL_ID"),
-                        "COGNITO_APP_CLIENT_ID": ecs.Secret.from_secrets_manager(cognito_secrets,
-                                                                                 "COGNITO_APP_CLIENT_ID"),
-                        "COGNITO_APP_CLIENT_SECRET": ecs.Secret.from_secrets_manager(cognito_secrets,
-                                                                                     "COGNITO_APP_CLIENT_SECRET")
-                    }
+                        "COGNITO_POOL_ID": ecs.Secret.from_secrets_manager(
+                            cognito_secrets, "COGNITO_POOL_ID"
+                        ),
+                        "COGNITO_APP_CLIENT_ID": ecs.Secret.from_secrets_manager(
+                            cognito_secrets, "COGNITO_APP_CLIENT_ID"
+                        ),
+                        "COGNITO_APP_CLIENT_SECRET": ecs.Secret.from_secrets_manager(
+                            cognito_secrets, "COGNITO_APP_CLIENT_SECRET"
+                        ),
+                    },
                 )
 
                 avatar_gallery_container.add_port_mappings(
@@ -1518,7 +1635,7 @@ class ComfyUIStack(Stack):
                     cluster=cluster,
                     task_definition=avatar_gallery_task_definition,
                     desired_count=1,
-                    security_groups=[avatar_services_security_group]
+                    security_groups=[avatar_services_security_group],
                 )
 
                 avatar_gallery_target_group = elbv2.ApplicationTargetGroup(
@@ -1538,7 +1655,7 @@ class ComfyUIStack(Stack):
                         timeout=Duration.seconds(5),
                         unhealthy_threshold_count=3,
                         healthy_threshold_count=2,
-                    )
+                    ),
                 )
 
                 avatar_gallery_target_group.add_target(avatar_gallery_service)
@@ -1548,8 +1665,12 @@ class ComfyUIStack(Stack):
                     "AvatarGalleryRule",
                     listener=avatar_listener,
                     priority=5,
-                    conditions=[elbv2.ListenerCondition.host_headers([record_name_avatar_gallery])],
-                    action=elbv2.ListenerAction.forward([avatar_gallery_target_group])
+                    conditions=[
+                        elbv2.ListenerCondition.host_headers(
+                            [record_name_avatar_gallery]
+                        )
+                    ],
+                    action=elbv2.ListenerAction.forward([avatar_gallery_target_group]),
                 )
 
         # ################################################
@@ -1557,22 +1678,26 @@ class ComfyUIStack(Stack):
         # are accepted risks for this stack
         # ###############################################
         NagSuppressions.add_resource_suppressions(
-            [comfyui_workflow_asg, comfyui_api_asg],
+            [comfyui_workflow_asg],
             suppressions=[
-                {"id": "AwsSolutions-L1",
-                 "reason": "Lambda Runtime is provided by custom resource provider and drain ecs hook implicitely and not critical for sample"
-                 },
-                {"id": "AwsSolutions-SNS2",
-                 "reason": "SNS topic is implicitly created by LifeCycleActions and is not critical for sample purposes."
-                 },
-                {"id": "AwsSolutions-SNS3",
-                 "reason": "SNS topic is implicitly created by LifeCycleActions and is not critical for sample purposes."
-                 },
-                {"id": "AwsSolutions-AS3",
-                 "reason": "Not all scaling notifcations are relevant to be tracked. Because Lambda handles the scaling"
-                 }
+                {
+                    "id": "AwsSolutions-L1",
+                    "reason": "Lambda Runtime is provided by custom resource provider and drain ecs hook implicitely and not critical for sample",
+                },
+                {
+                    "id": "AwsSolutions-SNS2",
+                    "reason": "SNS topic is implicitly created by LifeCycleActions and is not critical for sample purposes.",
+                },
+                {
+                    "id": "AwsSolutions-SNS3",
+                    "reason": "SNS topic is implicitly created by LifeCycleActions and is not critical for sample purposes.",
+                },
+                {
+                    "id": "AwsSolutions-AS3",
+                    "reason": "Not all scaling notifcations are relevant to be tracked. Because Lambda handles the scaling",
+                },
             ],
-            apply_to_children=True
+            apply_to_children=True,
         )
 
         NagSuppressions.add_resource_suppressions_by_path(
@@ -1581,9 +1706,20 @@ class ComfyUIStack(Stack):
             suppressions=[
                 {
                     "id": "AwsSolutions-L1",
-                    "reason": "Can not change the runtime of the lambda created behind the construct"
+                    "reason": "Can not change the runtime of the lambda created behind the construct",
                 }
-            ]
+            ],
+        )
+
+        NagSuppressions.add_resource_suppressions_by_path(
+            self,
+            "/ComfyUIStack/AvatarAppLogBucket/Resource",
+            suppressions=[
+                {
+                    "id": "AwsSolutions-S1",
+                    "reason": "Access Logs for Model Bucket not mandatory for AWS-Sample",
+                }
+            ],
         )
 
         NagSuppressions.add_resource_suppressions(
@@ -1591,7 +1727,33 @@ class ComfyUIStack(Stack):
             suppressions=[
                 {
                     "id": "AwsSolutions-SMG4",
-                    "reason": "The secret contains cognito environment variables like user-pool id, client_id, client_secret, which are not rotated"
+                    "reason": "The secret contains cognito environment variables like user-pool id, client_id, client_secret, which are not rotated",
                 }
-            ]
+            ],
         )
+
+        if deployment_type in ["ComfyUIWithAvatarApp", "FullStack"]:
+            required_vars.append("RECORD_NAME_AVATAR_APP")
+
+            NagSuppressions.add_resource_suppressions(
+                [comfyui_api_asg],
+                suppressions=[
+                    {
+                        "id": "AwsSolutions-L1",
+                        "reason": "Lambda Runtime is provided by custom resource provider and drain ecs hook implicitely and not critical for sample",
+                    },
+                    {
+                        "id": "AwsSolutions-SNS2",
+                        "reason": "SNS topic is implicitly created by LifeCycleActions and is not critical for sample purposes.",
+                    },
+                    {
+                        "id": "AwsSolutions-SNS3",
+                        "reason": "SNS topic is implicitly created by LifeCycleActions and is not critical for sample purposes.",
+                    },
+                    {
+                        "id": "AwsSolutions-AS3",
+                        "reason": "Not all scaling notifcations are relevant to be tracked. Because Lambda handles the scaling",
+                    },
+                ],
+                apply_to_children=True,
+            )

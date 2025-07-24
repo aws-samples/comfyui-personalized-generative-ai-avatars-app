@@ -108,12 +108,7 @@ Ensure all these prerequisites are met before proceeding with the deployment.
    cd comfyui-personalized-generative-ai-avatars-app
    ```
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
-
-3. Edit all the required environment variables inside `set_variables.sh` and source the script to set them:
+2. Edit all the required environment variables inside `set_variables.sh` and source the script to set them:
    ```bash
    #EDIT THE VARIABLES FIRST!
    source set_variables.sh
@@ -155,7 +150,7 @@ Ensure all these prerequisites are met before proceeding with the deployment.
 
 ### PRE-SYNC all required models that the Avatar App and Gallery can work.
 This is mandatory for the Avatar App. If you deploy only ComfyUI, then this step is optional.  
-IMPORTANT: You need approx. 15GB free disk space locally. If you want to download the models and delete them after the upload, then uncomment this in the `presync.py` file:
+IMPORTANT: You need approx. 15GB free disk space locally. If you want to download the models and delete them immediately after the upload, then uncomment this in the `presync.py` file:
    ```python
     # shutil.rmtree(LOCAL_MODEL_DIR)
    ```
@@ -166,10 +161,6 @@ Per default the script downloads only the mandatory models from [model_list.txt]
    ```bash
    python3 -m presync
    ```  
-2. Set environemnt Variable for bucket
-   ```bash
-   export MODEL_BUCKET_NAME=<your-model-bucket-name-from-presync-ouptut>
-   ```
 
 
 ### Deploying the Stack
@@ -301,7 +292,7 @@ Use the [AWS Pricing Calculator](https://calculator.aws/) to estimate costs base
 
 To avoid ongoing charges, delete the resources when no longer needed:
 
-1. Manually delete the Auto Scaling Group from the AWS Console.
+1. Manually delete the Auto Scaling Group and Cognito User Pool from the AWS Console.
 2. Run `cdk destroy` to remove the remaining resources.
 3. Manually delete the MODEL_BUCKET and Cognito User Pool from the AWS Console.
 4. Delete the ECR repositories if no longer needed.
@@ -351,6 +342,17 @@ Further details you can find here:
 
 This project uses various open-source libraries and AWS services. Please see the [THIRD-PARTY](THIRD-PARTY) file for attributions.
 
+
+## Development Guidelines
+
+This project follows specific coding standards and best practices. Contributors should refer to the following guidelines:
+
+- Keep code simple and straightforward
+- Follow existing code style and formatting
+- Use short, descriptive comments
+- Maintain consistent naming conventions
+
+For more detailed information, see the [Coding Standards](.kiro/steering/coding-standards.md) document.
 
 ## Related Projects
 

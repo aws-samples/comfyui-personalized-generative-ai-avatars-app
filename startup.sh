@@ -28,6 +28,7 @@ echo "Python interpreter used: $(which python)"
 echo "Python version: $(python --version)"
 echo "Pip used: $(which pip)"
 echo "Virtual environment: $VIRTUAL_ENV"
+echo "CUDA version: $(nvidia-smi | grep 'CUDA Version')"
 
 # Install only missing requirements
 if [ ! -f "$EFS_MOUNT/.requirements_installed" ]; then
@@ -38,5 +39,7 @@ else
     echo "Requirements already installed. Skipping."
 fi
 
+python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('GPU device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'No GPU')"
+
 echo "Starting ComfyUI..."
-exec python "$EFS_MOUNT/main.py" --listen 0.0.0.0 --port 8181 --output-directory "$EFS_MOUNT/output/"
+exec python "$EFS_MOUNT/main.py" --listen 0.0.0.0 --port 8181 --output-directory "$EFS_MOUNT/output/" --front-end-version Comfy-Org/ComfyUI_frontend@latest
