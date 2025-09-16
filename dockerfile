@@ -84,12 +84,15 @@ RUN echo "### Install ComfyUI-Manager" && \
 RUN echo "### Install ComfyUI_IPAdapter_plus" && \
     mkdir -p custom_nodes/ComfyUI_IPAdapter_plus && \
     git clone https://github.com/cubiq/ComfyUI_IPAdapter_plus.git custom_nodes/ComfyUI_IPAdapter_plus
-
+    
 RUN echo "### Install ComfyUI-ReActor Node" && \
     mkdir -p custom_nodes/ComfyUI-ReActor && \
     git clone https://github.com/Gourieff/ComfyUI-ReActor.git custom_nodes/ComfyUI-ReActor && \
     cd custom_nodes/ComfyUI-ReActor && \
-    python3 -m pip install -r requirements.txt
+    python3 -m pip install -r requirements.txt && \
+    pip install tf-keras && \
+    echo "import tensorflow" | cat - __init__.py > temp && mv temp __init__.py
+
 
 # Copy the startup script
 COPY startup.sh /app/startup.sh
