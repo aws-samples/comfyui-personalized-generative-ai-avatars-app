@@ -55,24 +55,23 @@ COPY comfyui_config/extra_model_paths.yaml /app/ComfyUI/extra_model_paths.yaml
 # Install ComfyUI requirements
 RUN python3 -m pip install -r requirements.txt
 
-# Install custom requirements
-RUN python3 -m pip install \
-    aliyun-python-sdk-core-v3==2.13.10 \
-    opencv-python \
-    tensorflow[gpu] \
-    onnx \
-    modelscope \
-    scikit-image \
-    matplotlib \
-    insightface \
-    diffusers==0.18.2 \
-    sentencepiece \
-    python-slugify==8.0.1 \
-    timm \
-    controlnet_aux==0.0.6 \
-    mmdet==2.26.0 \
-    mediapipe \
-    transformers
+# Install custom requirements - split in separate layers for avoiding internal dependencies
+RUN python3 -m pip install aliyun-python-sdk-core-v3==2.13.10
+RUN python3 -m pip install opencv-python
+RUN python3 -m pip install tensorflow[gpu] 
+RUN python3 -m pip install onnx 
+RUN python3 -m pip install modelscope
+RUN python3 -m pip install scikit-image
+RUN python3 -m pip install matplotlib
+RUN python3 -m pip install insightface
+RUN python3 -m pip install diffusers==0.18.2
+RUN python3 -m pip install sentencepiece
+RUN python3 -m pip install python-slugify==8.0.1
+RUN python3 -m pip install timm
+RUN python3 -m pip install controlnet_aux==0.0.6
+RUN python3 -m pip install mmdet==2.26.0
+RUN python3 -m pip install mediapipe
+RUN python3 -m pip install transformers
 
 # Include the custom nodes
 RUN echo "### Install ComfyUI-Manager" && \
