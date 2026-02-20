@@ -8,25 +8,49 @@ RUN apt-get update && \
         gcc \
         libc6-dev \
     && apt-get clean \
-    && pip3 install --upgrade pip setuptools wheel \
     && rm -rf /var/lib/apt/lists/*
-
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Stage 2: build final image
 FROM python:3.11-slim-bookworm
 WORKDIR /app
+
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
+    apt-get install --only-upgrade -y \
+        sqlite3 \
+        libsqlite3-0 \
+        openssl \
+        libssl3 \
+        perl \
+        perl-base \
+        perl-modules-5.36 \
+        xz-utils \
+        liblzma5 \
+        libc6 \
+        libc-bin \
+        libpam0g \
+        libpam-modules \
+        libpam-runtime \
+        gnutls-bin \
+        libgnutls30 \
+        gnupg \
+        gnupg2 \
+        gpg \
+        libkrb5-3 \
+        libkrb5support0 \
+        krb5-locales \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 user
+
 USER user
 COPY --from=builder /usr/local /usr/local
 COPY avatar_gallery.py ./avatar_gallery.py
 COPY .streamlit/config.toml ./.streamlit/config.toml
 COPY qr-code.png ./qr-code.png
-
+ 
 EXPOSE 8502
 CMD ["streamlit", "run", "avatar_gallery.py", \
     "--server.headless=true", \
